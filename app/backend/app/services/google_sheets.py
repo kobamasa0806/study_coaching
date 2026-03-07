@@ -1,14 +1,29 @@
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
 
-def get_sheets_service():
-    creds = service_account.Credentials.from_service_account_file(
+def get_credentials():
+    return service_account.Credentials.from_service_account_file(
         "service_account.json",
         scopes=SCOPES,
     )
-    return build("sheets", "v4", credentials=creds)
+
+def get_sheets_service():
+    return build("sheets", "v4", credentials=get_credentials())
+
+def get_drive_service():
+    return build("drive", "v3", credentials=get_credentials())
+
+def share_with_anyone(spreadsheet_id: str):
+    drive = get_drive_service()
+    drive.permissions().create(
+        fileId=spreadsheet_id,
+        body={"type": "anyone", "role": "writer"},
+    ).execute()
 
 def create_spreadsheet(title: str):
     service = get_sheets_service()
@@ -127,6 +142,7 @@ def create_full_sheet(user_id: str):
     title = f"学習進捗管理_{user_id}"
 
     spreadsheet_id, url = create_spreadsheet(title)
+    share_with_anyone(spreadsheet_id)
     add_sheets(spreadsheet_id)
     write_plan_header(spreadsheet_id)
     write_master(spreadsheet_id, categories=[], books=[])
