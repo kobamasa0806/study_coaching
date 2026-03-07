@@ -1,14 +1,21 @@
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import Features from './components/Features'
+import HowItWorks from './components/HowItWorks'
+import TargetSection from './components/TargetSection'
+import CTASection from './components/CTASection'
+import Footer from './components/Footer'
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">
-          学習コーチングプロジェクト
-        </h1>
-        <p className="text-xl text-gray-600">
-          AI-powered learning coaching platform
-        </p>
-      </div>
-    </main>
+    <>
+      <Navbar />
+      <Hero />
+      <Features />
+      <HowItWorks />
+      <TargetSection />
+      <CTASection />
+      <Footer />
+    </>
   )
 }
