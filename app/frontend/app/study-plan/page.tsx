@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { addDays, startOfWeek, format } from 'date-fns'
+import { addDays, addMonths, differenceInDays, endOfMonth, startOfMonth, startOfWeek, format } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Plus, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, CalendarPlus } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import GanttChart from './components/GanttChart'
 
@@ -14,7 +14,7 @@ export type GanttItem = {
   actualDates: string[]
 }
 
-const WEEKS_TO_SHOW = 8
+const INITIAL_DAYS = 8 * 7 // 8 weeks to start
 const STORAGE_KEY = 'studycoach-gantt-v1'
 
 let _idSeq = 0
@@ -32,14 +32,15 @@ function getDefaultItems(): GanttItem[] {
   ]
 }
 
-function getDisplayDates(start: Date, weeks: number): Date[] {
-  return Array.from({ length: weeks * 7 }, (_, i) => addDays(start, i))
+function getDisplayDates(start: Date, days: number): Date[] {
+  return Array.from({ length: days }, (_, i) => addDays(start, i))
 }
 
 export default function StudyPlanPage() {
   const [mounted, setMounted] = useState(false)
   const [items, setItems] = useState<GanttItem[]>([])
   const [viewStart, setViewStart] = useState<Date>(new Date())
+  const [totalDays, setTotalDays] = useState(INITIAL_DAYS)
 
   useEffect(() => {
     setViewStart(startOfWeek(new Date(), { weekStartsOn: 1 }))
@@ -64,7 +65,7 @@ export default function StudyPlanPage() {
     }
   }, [items, mounted])
 
-  const dates = getDisplayDates(viewStart, WEEKS_TO_SHOW)
+  const dates = getDisplayDates(viewStart, totalDays)
 
   function addItem() {
     setItems(prev => [
@@ -79,6 +80,15 @@ export default function StudyPlanPage() {
 
   function updateItemName(id: string, name: string) {
     setItems(prev => prev.map(i => (i.id === id ? { ...i, name } : i)))
+  }
+
+  function addNextMonth() {
+    // 現在の末尾日付の次の月末まで延長する
+    setTotalDays(prev => {
+      const currentEnd = addDays(viewStart, prev - 1)
+      const nextMonthEnd = endOfMonth(addMonths(startOfMonth(currentEnd), 1))
+      return differenceInDays(nextMonthEnd, viewStart) + 1
+    })
   }
 
   function toggleDates(
@@ -160,19 +170,32 @@ export default function StudyPlanPage() {
             <span className="text-sm text-gray-500 font-medium">
               {format(viewStart, 'yyyy年M月d日', { locale: ja })}
               {' 〜 '}
-              {format(addDays(viewStart, WEEKS_TO_SHOW * 7 - 1), 'M月d日', { locale: ja })}
+              {format(addDays(viewStart, totalDays - 1), 'M月d日', { locale: ja })}
             </span>
 
-            {/* Legend */}
+            {/* Right side: Legend + Add Month button */}
             <div className="flex items-center gap-4 ml-auto">
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-indigo-500" />
-                <span className="text-xs text-gray-600 font-medium">計画</span>
+              {/* Legend */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-indigo-500" />
+                  <span className="text-xs text-gray-600 font-medium">計画</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+                  <span className="text-xs text-gray-600 font-medium">実績</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-                <span className="text-xs text-gray-600 font-medium">実績</span>
-              </div>
+
+              {/* Add next month button */}
+              <button
+                onClick={addNextMonth}
+                className="inline-flex items-center gap-1.5 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 text-xs font-semibold px-3 py-2 rounded-xl transition-colors shadow-sm"
+                title="次の月を追加"
+              >
+                <CalendarPlus className="w-3.5 h-3.5" />
+                月を追加
+              </button>
             </div>
           </div>
 

@@ -3,8 +3,10 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { format, isToday, isWeekend } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Check, Pencil, Trash2 } from 'lucide-react'
+import { Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { GanttItem } from '../page'
+
+// ---- types ----
 
 type Props = {
   items: GanttItem[]
@@ -17,31 +19,66 @@ type Props = {
 type DragState = {
   itemId: string
   rowType: 'plan' | 'actual'
-  fill: boolean       // true = filling cells, false = clearing cells
+  fill: boolean
   startDate: string
   lastDate: string
 }
 
+type MonthInfo = {
+  key: string        // "yyyy-MM"
+  monthLabel: string // "M月"
+  yearLabel: string  // "yyyy年"
+  dates: Date[]
+}
+
+type YearGroup = {
+  label: string
+  months: MonthInfo[]
+}
+
+// ---- constants ----
+
 const NAME_COL_WIDTH = 210
 const CELL_WIDTH = 30
+const COLLAPSED_CELL_WIDTH = 22
+
+// ---- helpers ----
 
 function toDateStr(date: Date): string {
   return format(date, 'yyyy-MM-dd')
 }
 
-function buildMonthGroups(dates: Date[]): { label: string; span: number }[] {
-  const groups: { label: string; span: number }[] = []
+function buildMonthInfos(dates: Date[]): MonthInfo[] {
+  const map = new Map<string, MonthInfo>()
   for (const date of dates) {
-    const label = format(date, 'yyyy年M月', { locale: ja })
+    const key = format(date, 'yyyy-MM')
+    if (!map.has(key)) {
+      map.set(key, {
+        key,
+        monthLabel: format(date, 'M月'),
+        yearLabel: format(date, 'yyyy年'),
+        dates: [],
+      })
+    }
+    map.get(key)!.dates.push(date)
+  }
+  return Array.from(map.values())
+}
+
+function buildYearGroups(monthInfos: MonthInfo[]): YearGroup[] {
+  const groups: YearGroup[] = []
+  for (const m of monthInfos) {
     const last = groups[groups.length - 1]
-    if (last && last.label === label) {
-      last.span++
+    if (last && last.label === m.yearLabel) {
+      last.months.push(m)
     } else {
-      groups.push({ label, span: 1 })
+      groups.push({ label: m.yearLabel, months: [m] })
     }
   }
   return groups
 }
+
+// ---- component ----
 
 export default function GanttChart({
   items,
@@ -53,11 +90,40 @@ export default function GanttChart({
   const drag = useRef<DragState | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set())
 
-  const monthGroups = buildMonthGroups(dates)
+  const monthInfos = buildMonthInfos(dates)
+  const yearGroups = buildYearGroups(monthInfos)
   const allDateStrs = dates.map(toDateStr)
 
-  // ------ drag helpers ------
+  function isCollapsed(key: string) {
+    return collapsedMonths.has(key)
+  }
+
+  function toggleMonth(key: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    setCollapsedMonths(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  function visibleCols(m: MonthInfo) {
+    return isCollapsed(m.key) ? 1 : m.dates.length
+  }
+
+  function yearColSpan(year: YearGroup) {
+    return year.months.reduce((sum, m) => sum + visibleCols(m), 0)
+  }
+
+  const tableMinWidth =
+    NAME_COL_WIDTH +
+    monthInfos.reduce((sum, m) => sum + visibleCols(m) * CELL_WIDTH, 0)
+
+  // ---- drag helpers ----
+
   function getDatesBetween(from: string, to: string): string[] {
     const a = allDateStrs.indexOf(from)
     const b = allDateStrs.indexOf(to)
@@ -83,8 +149,8 @@ export default function GanttChart({
 
     const item = items.find(i => i.id === info.itemId)
     if (!item) return
-    const dates_arr = info.rowType === 'plan' ? item.planDates : item.actualDates
-    const fill = !dates_arr.includes(info.dateStr)
+    const arr = info.rowType === 'plan' ? item.planDates : item.actualDates
+    const fill = !arr.includes(info.dateStr)
 
     drag.current = {
       itemId: info.itemId,
@@ -120,7 +186,8 @@ export default function GanttChart({
     return () => window.removeEventListener('mouseup', stop)
   }, [])
 
-  // ------ edit helpers ------
+  // ---- edit helpers ----
+
   function startEdit(item: GanttItem, e: React.MouseEvent) {
     e.stopPropagation()
     setEditingId(item.id)
@@ -133,7 +200,8 @@ export default function GanttChart({
     setEditingId(null)
   }
 
-  // ------ render ------
+  // ---- render ----
+
   return (
     <div
       className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden select-none"
@@ -143,74 +211,133 @@ export default function GanttChart({
       <div className="overflow-x-auto">
         <table
           className="border-collapse"
-          style={{ minWidth: `${NAME_COL_WIDTH + dates.length * CELL_WIDTH}px` }}
+          style={{ minWidth: `${tableMinWidth}px` }}
         >
           {/* ========== HEADER ========== */}
           <thead>
-            {/* Month row */}
+
+            {/* ---- Row 1: Year ---- */}
             <tr>
+              {/* "項目" sticky cell — spans all 4 header rows */}
               <th
                 className="sticky left-0 z-20 bg-gray-50 border-b border-r border-gray-200 align-middle"
                 style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
-                rowSpan={3}
+                rowSpan={4}
               >
                 <span className="block px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-left">
                   項目
                 </span>
               </th>
-              {monthGroups.map(g => (
+
+              {yearGroups.map(year => (
                 <th
-                  key={g.label}
-                  colSpan={g.span}
-                  className="bg-gray-50 border-b border-r border-gray-200 text-center text-xs font-semibold text-gray-700 px-2 py-2 whitespace-nowrap"
+                  key={year.label}
+                  colSpan={yearColSpan(year)}
+                  className="bg-indigo-950 border-b border-r border-indigo-800 text-center text-xs font-bold text-indigo-200 px-2 py-1.5 whitespace-nowrap"
                 >
-                  {g.label}
+                  {year.label}
                 </th>
               ))}
             </tr>
 
-            {/* Day-of-week row */}
+            {/* ---- Row 2: Month (with collapse toggle) ---- */}
             <tr>
-              {dates.map(date => {
-                const wknd = isWeekend(date)
-                const tdy = isToday(date)
-                return (
+              {monthInfos.map(m => {
+                const collapsed = isCollapsed(m.key)
+                return collapsed ? (
+                  /* Collapsed: spans rows 2, 3, 4 (month + DoW + date) with 1 narrow column */
                   <th
-                    key={toDateStr(date)}
-                    style={{ width: CELL_WIDTH, minWidth: CELL_WIDTH }}
-                    className={`border-b border-r border-gray-200 text-center text-xs font-medium py-1 ${
-                      tdy
-                        ? 'bg-indigo-600 text-white'
-                        : wknd
-                        ? 'bg-red-50 text-red-400'
-                        : 'bg-gray-50 text-gray-500'
-                    }`}
+                    key={m.key}
+                    colSpan={1}
+                    rowSpan={3}
+                    style={{ width: COLLAPSED_CELL_WIDTH, minWidth: COLLAPSED_CELL_WIDTH }}
+                    className="border-b border-r border-gray-200 bg-gray-100 text-center align-middle p-0 cursor-pointer hover:bg-indigo-50 transition-colors"
+                    onClick={e => toggleMonth(m.key, e)}
+                    onMouseDown={e => e.stopPropagation()}
+                    title={`${m.monthLabel} を展開`}
                   >
-                    {format(date, 'E', { locale: ja })}
+                    <div className="flex flex-col items-center justify-center gap-0.5 py-1 h-full">
+                      <span
+                        className="text-gray-500 font-semibold"
+                        style={{ fontSize: 10, writingMode: 'vertical-rl', textOrientation: 'mixed' }}
+                      >
+                        {m.monthLabel}
+                      </span>
+                      <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    </div>
+                  </th>
+                ) : (
+                  /* Expanded: normal month header */
+                  <th
+                    key={m.key}
+                    colSpan={m.dates.length}
+                    rowSpan={1}
+                    className="bg-gray-50 border-b border-r border-gray-200 text-center text-xs font-semibold text-gray-700 px-1 py-1.5 whitespace-nowrap"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span>{m.monthLabel}</span>
+                      <button
+                        onMouseDown={e => e.stopPropagation()}
+                        onClick={e => toggleMonth(m.key, e)}
+                        className="text-gray-400 hover:text-indigo-600 transition-colors"
+                        title={`${m.monthLabel} を折りたたむ`}
+                      >
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                    </div>
                   </th>
                 )
               })}
             </tr>
 
-            {/* Date-number row */}
+            {/* ---- Row 3: Day of week (expanded months only) ---- */}
             <tr>
-              {dates.map(date => {
-                const wknd = isWeekend(date)
-                const tdy = isToday(date)
-                return (
-                  <th
-                    key={toDateStr(date)}
-                    className={`border-b border-r border-gray-200 text-center text-xs font-medium py-1 ${
-                      tdy
-                        ? 'bg-indigo-600 text-white'
-                        : wknd
-                        ? 'bg-red-50 text-red-400'
-                        : 'bg-gray-50 text-gray-600'
-                    }`}
-                  >
-                    {format(date, 'd')}
-                  </th>
-                )
+              {monthInfos.flatMap(m => {
+                if (isCollapsed(m.key)) return [] // covered by rowSpan=3 above
+                return m.dates.map(date => {
+                  const wknd = isWeekend(date)
+                  const tdy = isToday(date)
+                  return (
+                    <th
+                      key={toDateStr(date)}
+                      style={{ width: CELL_WIDTH, minWidth: CELL_WIDTH }}
+                      className={`border-b border-r border-gray-200 text-center text-xs font-medium py-1 ${
+                        tdy
+                          ? 'bg-indigo-600 text-white'
+                          : wknd
+                          ? 'bg-red-50 text-red-400'
+                          : 'bg-gray-50 text-gray-500'
+                      }`}
+                    >
+                      {format(date, 'E', { locale: ja })}
+                    </th>
+                  )
+                })
+              })}
+            </tr>
+
+            {/* ---- Row 4: Date number (expanded months only) ---- */}
+            <tr>
+              {monthInfos.flatMap(m => {
+                if (isCollapsed(m.key)) return [] // covered by rowSpan=3 above
+                return m.dates.map(date => {
+                  const wknd = isWeekend(date)
+                  const tdy = isToday(date)
+                  return (
+                    <th
+                      key={toDateStr(date)}
+                      className={`border-b border-r border-gray-200 text-center text-xs font-medium py-1 ${
+                        tdy
+                          ? 'bg-indigo-600 text-white'
+                          : wknd
+                          ? 'bg-red-50 text-red-400'
+                          : 'bg-gray-50 text-gray-600'
+                      }`}
+                    >
+                      {format(date, 'd')}
+                    </th>
+                  )
+                })
               })}
             </tr>
           </thead>
@@ -220,7 +347,7 @@ export default function GanttChart({
             {items.length === 0 ? (
               <tr>
                 <td
-                  colSpan={dates.length + 1}
+                  colSpan={monthInfos.reduce((s, m) => s + visibleCols(m), 0) + 1}
                   className="text-center py-20 text-gray-400 text-sm"
                 >
                   項目がありません。「項目を追加」ボタンから追加してください。
@@ -231,9 +358,10 @@ export default function GanttChart({
                 const isLast = idx === items.length - 1
                 return (
                   <Fragment key={item.id}>
+
                     {/* ---- Plan row ---- */}
                     <tr className="group/item">
-                      {/* Sticky name cell (rowspan 2) */}
+                      {/* Sticky name cell (rowSpan=2 for plan+actual) */}
                       <td
                         className="sticky left-0 z-10 bg-white border-r border-gray-200 p-0"
                         rowSpan={2}
@@ -290,7 +418,7 @@ export default function GanttChart({
                           )}
                         </div>
 
-                        {/* Plan / Actual labels */}
+                        {/* 計画 / 実績 labels */}
                         <div className="flex border-t border-gray-100" style={{ height: 44 }}>
                           <div className="flex-1 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-semibold border-r border-gray-100 tracking-wide">
                             計画
@@ -301,63 +429,86 @@ export default function GanttChart({
                         </div>
                       </td>
 
-                      {/* Plan date cells */}
-                      {dates.map(date => {
-                        const dateStr = toDateStr(date)
-                        const filled = item.planDates.includes(dateStr)
-                        const wknd = isWeekend(date)
-                        const tdy = isToday(date)
-                        return (
-                          <td
-                            key={dateStr}
-                            data-gantt="true"
-                            data-item-id={item.id}
-                            data-row-type="plan"
-                            data-date={dateStr}
-                            style={{ height: 22, cursor: 'crosshair' }}
-                            className={`border-r border-gray-100 transition-colors ${
-                              filled
-                                ? 'bg-indigo-500'
-                                : tdy
-                                ? 'bg-indigo-50 hover:bg-indigo-200'
-                                : wknd
-                                ? 'bg-gray-50 hover:bg-indigo-100'
-                                : 'hover:bg-indigo-100'
-                            }`}
-                          />
-                        )
+                      {/* Plan date cells (per month) */}
+                      {monthInfos.flatMap(m => {
+                        if (isCollapsed(m.key)) {
+                          return [(
+                            <td
+                              key={`${item.id}-${m.key}-plan`}
+                              style={{ width: COLLAPSED_CELL_WIDTH, height: 22 }}
+                              className="border-r border-gray-200 bg-gray-50"
+                            />
+                          )]
+                        }
+                        return m.dates.map(date => {
+                          const dateStr = toDateStr(date)
+                          const filled = item.planDates.includes(dateStr)
+                          const wknd = isWeekend(date)
+                          const tdy = isToday(date)
+                          return (
+                            <td
+                              key={dateStr}
+                              data-gantt="true"
+                              data-item-id={item.id}
+                              data-row-type="plan"
+                              data-date={dateStr}
+                              style={{ height: 22, cursor: 'crosshair' }}
+                              className={`border-r border-gray-100 transition-colors ${
+                                filled
+                                  ? 'bg-indigo-500'
+                                  : tdy
+                                  ? 'bg-indigo-50 hover:bg-indigo-200'
+                                  : wknd
+                                  ? 'bg-gray-50 hover:bg-indigo-100'
+                                  : 'hover:bg-indigo-100'
+                              }`}
+                            />
+                          )
+                        })
                       })}
                     </tr>
 
                     {/* ---- Actual row ---- */}
                     <tr className={!isLast ? 'border-b-2 border-gray-200' : ''}>
-                      {/* Actual date cells */}
-                      {dates.map(date => {
-                        const dateStr = toDateStr(date)
-                        const filled = item.actualDates.includes(dateStr)
-                        const wknd = isWeekend(date)
-                        const tdy = isToday(date)
-                        return (
-                          <td
-                            key={dateStr}
-                            data-gantt="true"
-                            data-item-id={item.id}
-                            data-row-type="actual"
-                            data-date={dateStr}
-                            style={{ height: 22, cursor: 'crosshair' }}
-                            className={`border-r border-gray-100 transition-colors ${
-                              filled
-                                ? 'bg-emerald-500'
-                                : tdy
-                                ? 'bg-emerald-50 hover:bg-emerald-200'
-                                : wknd
-                                ? 'bg-gray-50 hover:bg-emerald-100'
-                                : 'hover:bg-emerald-100'
-                            }`}
-                          />
-                        )
+                      {/* Actual date cells (per month) */}
+                      {monthInfos.flatMap(m => {
+                        if (isCollapsed(m.key)) {
+                          return [(
+                            <td
+                              key={`${item.id}-${m.key}-actual`}
+                              style={{ width: COLLAPSED_CELL_WIDTH, height: 22 }}
+                              className="border-r border-gray-200 bg-gray-50"
+                            />
+                          )]
+                        }
+                        return m.dates.map(date => {
+                          const dateStr = toDateStr(date)
+                          const filled = item.actualDates.includes(dateStr)
+                          const wknd = isWeekend(date)
+                          const tdy = isToday(date)
+                          return (
+                            <td
+                              key={dateStr}
+                              data-gantt="true"
+                              data-item-id={item.id}
+                              data-row-type="actual"
+                              data-date={dateStr}
+                              style={{ height: 22, cursor: 'crosshair' }}
+                              className={`border-r border-gray-100 transition-colors ${
+                                filled
+                                  ? 'bg-emerald-500'
+                                  : tdy
+                                  ? 'bg-emerald-50 hover:bg-emerald-200'
+                                  : wknd
+                                  ? 'bg-gray-50 hover:bg-emerald-100'
+                                  : 'hover:bg-emerald-100'
+                              }`}
+                            />
+                          )
+                        })
                       })}
                     </tr>
+
                   </Fragment>
                 )
               })
