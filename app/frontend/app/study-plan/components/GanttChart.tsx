@@ -1,53 +1,74 @@
 'use client'
 
+/**
+ * ガントチャートコンポーネント。
+ * - 年・月・曜日・日付の4行ヘッダーを持つ表形式のガントチャート
+ * - 各項目（タスク）は「計画」行と「実績」行の2行で構成される
+ * - セルをクリック・ドラッグして日付を塗りつぶす（もしくは消す）
+ * - 月ヘッダーをクリックすると列を折りたたみ/展開できる
+ * - 項目名はクリックして編集できる
+ */
+
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { format, isToday, isWeekend } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { GanttItem } from '../page'
 
-// ---- types ----
+// ---- 型定義 ----
 
+/** コンポーネントの props */
 type Props = {
   items: GanttItem[]
   dates: Date[]
+  /** 日付セルのクリック/ドラッグ時に呼ばれる */
   onToggleDates: (itemId: string, rowType: 'plan' | 'actual', dates: string[], fill: boolean) => void
+  /** 項目名の変更時に呼ばれる */
   onUpdateName: (id: string, name: string) => void
+  /** 項目の削除時に呼ばれる */
   onRemoveItem: (id: string) => void
 }
 
+/** ドラッグ中の状態を保持する型 */
 type DragState = {
-  itemId: string
-  rowType: 'plan' | 'actual'
-  fill: boolean
-  startDate: string
-  lastDate: string
+  itemId: string              // ドラッグ中の項目ID
+  rowType: 'plan' | 'actual'  // 計画行か実績行か
+  fill: boolean               // 塗りつぶし（true）か消去（false）か
+  startDate: string           // ドラッグ開始日
+  lastDate: string            // 最後にホバーした日
 }
 
+/** 月ごとの表示情報 */
 type MonthInfo = {
-  key: string        // "yyyy-MM"
-  monthLabel: string // "M月"
-  yearLabel: string  // "yyyy年"
-  dates: Date[]
+  key: string        // "yyyy-MM" 形式（折りたたみの識別子）
+  monthLabel: string // 表示用月ラベル（例: "3月"）
+  yearLabel: string  // 表示用年ラベル（例: "2026年"）
+  dates: Date[]      // この月に含まれる日付の配列
 }
 
+/** 年ごとにグループ化した月情報 */
 type YearGroup = {
-  label: string
-  months: MonthInfo[]
+  label: string       // 年ラベル（例: "2026年"）
+  months: MonthInfo[] // この年に含まれる月の配列
 }
 
-// ---- constants ----
+// ---- 定数 ----
 
-const NAME_COL_WIDTH = 210
-const CELL_WIDTH = 30
-const COLLAPSED_CELL_WIDTH = 22
+const NAME_COL_WIDTH = 210      // 項目名列の幅（px）
+const CELL_WIDTH = 30           // 通常の日付セル幅（px）
+const COLLAPSED_CELL_WIDTH = 22 // 折りたたまれた月の列幅（px）
 
-// ---- helpers ----
+// ---- ヘルパー関数 ----
 
+/** Date を "yyyy-MM-dd" 形式の文字列に変換する */
 function toDateStr(date: Date): string {
   return format(date, 'yyyy-MM-dd')
 }
 
+/**
+ * 日付配列から月ごとの情報を構築する。
+ * Map を使って同じ月の日付をまとめる。
+ */
 function buildMonthInfos(dates: Date[]): MonthInfo[] {
   const map = new Map<string, MonthInfo>()
   for (const date of dates) {
@@ -65,6 +86,10 @@ function buildMonthInfos(dates: Date[]): MonthInfo[] {
   return Array.from(map.values())
 }
 
+/**
+ * 月情報を年でグループ化する。
+ * 同じ年が連続する場合は1つのグループにまとめる。
+ */
 function buildYearGroups(monthInfos: MonthInfo[]): YearGroup[] {
   const groups: YearGroup[] = []
   for (const m of monthInfos) {
@@ -78,7 +103,7 @@ function buildYearGroups(monthInfos: MonthInfo[]): YearGroup[] {
   return groups
 }
 
-// ---- component ----
+// ---- コンポーネント本体 ----
 
 export default function GanttChart({
   items,
@@ -87,19 +112,27 @@ export default function GanttChart({
   onUpdateName,
   onRemoveItem,
 }: Props) {
+  // ドラッグ状態（ref で管理して再レンダリングを避ける）
   const drag = useRef<DragState | null>(null)
+  // 編集中の項目ID
   const [editingId, setEditingId] = useState<string | null>(null)
+  // 編集中のテキスト
   const [editValue, setEditValue] = useState('')
+  // 折りたたまれた月のキーセット
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set())
 
+  // 月・年のグループ情報を計算
   const monthInfos = buildMonthInfos(dates)
   const yearGroups = buildYearGroups(monthInfos)
+  // 表示範囲の全日付を文字列配列で保持
   const allDateStrs = dates.map(toDateStr)
 
+  /** 指定した月が折りたたまれているかどうかを返す */
   function isCollapsed(key: string) {
     return collapsedMonths.has(key)
   }
 
+  /** 月の折りたたみ/展開をトグルする */
   function toggleMonth(key: string, e: React.MouseEvent) {
     e.stopPropagation()
     setCollapsedMonths(prev => {
@@ -110,20 +143,27 @@ export default function GanttChart({
     })
   }
 
+  /** 月の表示列数を返す（折りたたみ時は1列） */
   function visibleCols(m: MonthInfo) {
     return isCollapsed(m.key) ? 1 : m.dates.length
   }
 
+  /** 年グループ全体の列数を返す */
   function yearColSpan(year: YearGroup) {
     return year.months.reduce((sum, m) => sum + visibleCols(m), 0)
   }
 
+  // テーブルの最小幅（スクロール用）
   const tableMinWidth =
     NAME_COL_WIDTH +
     monthInfos.reduce((sum, m) => sum + visibleCols(m) * CELL_WIDTH, 0)
 
-  // ---- drag helpers ----
+  // ---- ドラッグ操作 ----
 
+  /**
+   * from〜to の間にある日付文字列の配列を返す。
+   * allDateStrs 内のインデックスを使って範囲を計算する。
+   */
   function getDatesBetween(from: string, to: string): string[] {
     const a = allDateStrs.indexOf(from)
     const b = allDateStrs.indexOf(to)
@@ -132,6 +172,10 @@ export default function GanttChart({
     return allDateStrs.slice(lo, hi + 1)
   }
 
+  /**
+   * クリックされた要素から data-gantt 属性を持つセルを探し、
+   * 項目ID・行タイプ・日付文字列を返す。
+   */
   function getCellInfo(el: Element | null) {
     const cell = el?.closest('[data-gantt]') as HTMLElement | null
     if (!cell) return null
@@ -142,6 +186,7 @@ export default function GanttChart({
     }
   }
 
+  /** マウスボタンを押したとき：ドラッグ開始 */
   function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
     const info = getCellInfo(e.target as Element)
     if (!info) return
@@ -149,6 +194,7 @@ export default function GanttChart({
 
     const item = items.find(i => i.id === info.itemId)
     if (!item) return
+    // 現在の状態を確認：塗りつぶされていれば消去、そうでなければ塗りつぶし
     const arr = info.rowType === 'plan' ? item.planDates : item.actualDates
     const fill = !arr.includes(info.dateStr)
 
@@ -162,45 +208,52 @@ export default function GanttChart({
     onToggleDates(info.itemId, info.rowType, [info.dateStr], fill)
   }
 
+  /** マウスが別のセルに入ったとき：ドラッグ継続 */
   function handleMouseOver(e: React.MouseEvent<HTMLDivElement>) {
     if (!drag.current) return
     const info = getCellInfo(e.target as Element)
     if (!info) return
+    // 別の項目・行には塗らない
     if (info.itemId !== drag.current.itemId || info.rowType !== drag.current.rowType) return
+    // 同じセルでは何もしない
     if (info.dateStr === drag.current.lastDate) return
 
+    // 前回の範囲と今回の範囲を比較して差分だけ更新する
     const prevSet = new Set(getDatesBetween(drag.current.startDate, drag.current.lastDate))
     const nextSet = new Set(getDatesBetween(drag.current.startDate, info.dateStr))
 
-    const toApply = [...nextSet].filter(d => !prevSet.has(d))
-    const toUndo = [...prevSet].filter(d => !nextSet.has(d))
+    const toApply = [...nextSet].filter(d => !prevSet.has(d)) // 新たに追加する日付
+    const toUndo = [...prevSet].filter(d => !nextSet.has(d))  // 元に戻す日付
 
     if (toApply.length) onToggleDates(info.itemId, info.rowType, toApply, drag.current.fill)
     if (toUndo.length) onToggleDates(info.itemId, info.rowType, toUndo, !drag.current.fill)
     drag.current.lastDate = info.dateStr
   }
 
+  // マウスボタンを離したときにドラッグを終了する
   useEffect(() => {
     const stop = () => { drag.current = null }
     window.addEventListener('mouseup', stop)
     return () => window.removeEventListener('mouseup', stop)
   }, [])
 
-  // ---- edit helpers ----
+  // ---- 項目名編集 ----
 
+  /** 項目名の編集を開始する */
   function startEdit(item: GanttItem, e: React.MouseEvent) {
     e.stopPropagation()
     setEditingId(item.id)
     setEditValue(item.name)
   }
 
+  /** 項目名の編集を確定する（空の場合は「項目名」に戻す） */
   function commitEdit() {
     if (!editingId) return
     onUpdateName(editingId, editValue.trim() || '項目名')
     setEditingId(null)
   }
 
-  // ---- render ----
+  // ---- レンダリング ----
 
   return (
     <div
@@ -213,12 +266,15 @@ export default function GanttChart({
           className="border-collapse"
           style={{ minWidth: `${tableMinWidth}px` }}
         >
-          {/* ========== HEADER ========== */}
+          {/* ========== ヘッダー部分 ========== */}
           <thead>
 
-            {/* ---- Row 1: Year ---- */}
+            {/* ---- 1行目: 年ラベル ---- */}
             <tr>
-              {/* "項目" sticky cell — spans all 4 header rows */}
+              {/*
+                「項目」列のヘッダーセル。
+                rowSpan=4 でヘッダーの全4行にわたって表示する。
+              */}
               <th
                 className="sticky left-0 z-20 bg-gray-50 border-b border-r border-gray-200 align-middle"
                 style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
@@ -229,6 +285,7 @@ export default function GanttChart({
                 </span>
               </th>
 
+              {/* 年ラベルセル（年をまたぐ場合は複数表示される） */}
               {yearGroups.map(year => (
                 <th
                   key={year.label}
@@ -240,12 +297,15 @@ export default function GanttChart({
               ))}
             </tr>
 
-            {/* ---- Row 2: Month (with collapse toggle) ---- */}
+            {/* ---- 2行目: 月ラベル（折りたたみトグル付き） ---- */}
             <tr>
               {monthInfos.map(m => {
                 const collapsed = isCollapsed(m.key)
                 return collapsed ? (
-                  /* Collapsed: spans rows 2, 3, 4 (month + DoW + date) with 1 narrow column */
+                  /*
+                    折りたたみ中: rowSpan=3 で月・曜日・日付の3行を占有し、
+                    幅を COLLAPSED_CELL_WIDTH に縮小して月名を縦書きで表示する。
+                  */
                   <th
                     key={m.key}
                     colSpan={1}
@@ -267,7 +327,7 @@ export default function GanttChart({
                     </div>
                   </th>
                 ) : (
-                  /* Expanded: normal month header */
+                  /* 展開中: 通常の月ヘッダー。折りたたみボタンを表示する。 */
                   <th
                     key={m.key}
                     colSpan={m.dates.length}
@@ -290,10 +350,10 @@ export default function GanttChart({
               })}
             </tr>
 
-            {/* ---- Row 3: Day of week (expanded months only) ---- */}
+            {/* ---- 3行目: 曜日（展開中の月のみ） ---- */}
             <tr>
               {monthInfos.flatMap(m => {
-                if (isCollapsed(m.key)) return [] // covered by rowSpan=3 above
+                if (isCollapsed(m.key)) return [] // 折りたたみ中は rowSpan=3 で対応済み
                 return m.dates.map(date => {
                   const wknd = isWeekend(date)
                   const tdy = isToday(date)
@@ -303,10 +363,10 @@ export default function GanttChart({
                       style={{ width: CELL_WIDTH, minWidth: CELL_WIDTH }}
                       className={`border-b border-r border-gray-200 text-center text-xs font-medium py-1 ${
                         tdy
-                          ? 'bg-indigo-600 text-white'
+                          ? 'bg-indigo-600 text-white'     // 今日: 青背景
                           : wknd
-                          ? 'bg-red-50 text-red-400'
-                          : 'bg-gray-50 text-gray-500'
+                          ? 'bg-red-50 text-red-400'       // 土日: 薄赤
+                          : 'bg-gray-50 text-gray-500'     // 平日: グレー
                       }`}
                     >
                       {format(date, 'E', { locale: ja })}
@@ -316,10 +376,10 @@ export default function GanttChart({
               })}
             </tr>
 
-            {/* ---- Row 4: Date number (expanded months only) ---- */}
+            {/* ---- 4行目: 日付（展開中の月のみ） ---- */}
             <tr>
               {monthInfos.flatMap(m => {
-                if (isCollapsed(m.key)) return [] // covered by rowSpan=3 above
+                if (isCollapsed(m.key)) return [] // 折りたたみ中は rowSpan=3 で対応済み
                 return m.dates.map(date => {
                   const wknd = isWeekend(date)
                   const tdy = isToday(date)
@@ -342,9 +402,10 @@ export default function GanttChart({
             </tr>
           </thead>
 
-          {/* ========== BODY ========== */}
+          {/* ========== ボディ部分 ========== */}
           <tbody>
             {items.length === 0 ? (
+              /* 項目がない場合のメッセージ */
               <tr>
                 <td
                   colSpan={monthInfos.reduce((s, m) => s + visibleCols(m), 0) + 1}
@@ -359,17 +420,21 @@ export default function GanttChart({
                 return (
                   <Fragment key={item.id}>
 
-                    {/* ---- Plan row ---- */}
+                    {/* ---- 計画行（上の行） ---- */}
                     <tr className="group/item">
-                      {/* Sticky name cell (rowSpan=2 for plan+actual) */}
+                      {/*
+                        項目名セル。
+                        rowSpan=2 で計画行・実績行の両方に渡って表示する。
+                      */}
                       <td
                         className="sticky left-0 z-10 bg-white border-r border-gray-200 p-0"
                         rowSpan={2}
                         style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
                       >
-                        {/* Name area */}
+                        {/* 項目名エリア（クリックで編集モードに切り替わる） */}
                         <div className="flex items-center gap-1 px-3 py-1.5 min-h-[32px]">
                           {editingId === item.id ? (
+                            /* 編集中: テキスト入力フォームを表示 */
                             <div
                               className="flex items-center gap-1 w-full"
                               onMouseDown={e => e.stopPropagation()}
@@ -390,6 +455,7 @@ export default function GanttChart({
                               </button>
                             </div>
                           ) : (
+                            /* 通常表示: 項目名とホバー時に編集・削除ボタンを表示 */
                             <>
                               <span
                                 className="flex-1 min-w-0 text-sm font-medium text-gray-800 truncate"
@@ -401,12 +467,14 @@ export default function GanttChart({
                                 className="flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity"
                                 onMouseDown={e => e.stopPropagation()}
                               >
+                                {/* 編集ボタン */}
                                 <button
                                   onClick={e => startEdit(item, e)}
                                   className="p-1 rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
                                 >
                                   <Pencil className="w-3 h-3" />
                                 </button>
+                                {/* 削除ボタン */}
                                 <button
                                   onClick={e => { e.stopPropagation(); onRemoveItem(item.id) }}
                                   className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
@@ -418,7 +486,7 @@ export default function GanttChart({
                           )}
                         </div>
 
-                        {/* 計画 / 実績 labels */}
+                        {/* 「計画」「実績」のラベル（項目名セルの下半分） */}
                         <div className="flex border-t border-gray-100" style={{ height: 44 }}>
                           <div className="flex-1 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-semibold border-r border-gray-100 tracking-wide">
                             計画
@@ -429,9 +497,10 @@ export default function GanttChart({
                         </div>
                       </td>
 
-                      {/* Plan date cells (per month) */}
+                      {/* 計画日付セル（月ごとにレンダリング） */}
                       {monthInfos.flatMap(m => {
                         if (isCollapsed(m.key)) {
+                          // 折りたたみ中: 空のセルで列幅を確保
                           return [(
                             <td
                               key={`${item.id}-${m.key}-plan`}
@@ -442,12 +511,13 @@ export default function GanttChart({
                         }
                         return m.dates.map(date => {
                           const dateStr = toDateStr(date)
-                          const filled = item.planDates.includes(dateStr)
+                          const filled = item.planDates.includes(dateStr) // 計画日かどうか
                           const wknd = isWeekend(date)
                           const tdy = isToday(date)
                           return (
                             <td
                               key={dateStr}
+                              // data-gantt 属性はドラッグ処理で使用する
                               data-gantt="true"
                               data-item-id={item.id}
                               data-row-type="plan"
@@ -455,12 +525,12 @@ export default function GanttChart({
                               style={{ height: 22, cursor: 'crosshair' }}
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
-                                  ? 'bg-indigo-500'
+                                  ? 'bg-indigo-500'                      // 計画あり: 青
                                   : tdy
-                                  ? 'bg-indigo-50 hover:bg-indigo-200'
+                                  ? 'bg-indigo-50 hover:bg-indigo-200'  // 今日: 薄青
                                   : wknd
-                                  ? 'bg-gray-50 hover:bg-indigo-100'
-                                  : 'hover:bg-indigo-100'
+                                  ? 'bg-gray-50 hover:bg-indigo-100'    // 土日: グレー
+                                  : 'hover:bg-indigo-100'               // 平日: ホバー時薄青
                               }`}
                             />
                           )
@@ -468,11 +538,12 @@ export default function GanttChart({
                       })}
                     </tr>
 
-                    {/* ---- Actual row ---- */}
+                    {/* ---- 実績行（下の行） ---- */}
                     <tr className={!isLast ? 'border-b-2 border-gray-200' : ''}>
-                      {/* Actual date cells (per month) */}
+                      {/* 実績日付セル（月ごとにレンダリング） */}
                       {monthInfos.flatMap(m => {
                         if (isCollapsed(m.key)) {
+                          // 折りたたみ中: 空のセルで列幅を確保
                           return [(
                             <td
                               key={`${item.id}-${m.key}-actual`}
@@ -483,7 +554,7 @@ export default function GanttChart({
                         }
                         return m.dates.map(date => {
                           const dateStr = toDateStr(date)
-                          const filled = item.actualDates.includes(dateStr)
+                          const filled = item.actualDates.includes(dateStr) // 実績日かどうか
                           const wknd = isWeekend(date)
                           const tdy = isToday(date)
                           return (
@@ -496,12 +567,12 @@ export default function GanttChart({
                               style={{ height: 22, cursor: 'crosshair' }}
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
-                                  ? 'bg-emerald-500'
+                                  ? 'bg-emerald-500'                       // 実績あり: 緑
                                   : tdy
-                                  ? 'bg-emerald-50 hover:bg-emerald-200'
+                                  ? 'bg-emerald-50 hover:bg-emerald-200'  // 今日: 薄緑
                                   : wknd
-                                  ? 'bg-gray-50 hover:bg-emerald-100'
-                                  : 'hover:bg-emerald-100'
+                                  ? 'bg-gray-50 hover:bg-emerald-100'     // 土日: グレー
+                                  : 'hover:bg-emerald-100'                // 平日: ホバー時薄緑
                               }`}
                             />
                           )

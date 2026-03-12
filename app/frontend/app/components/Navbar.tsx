@@ -47,18 +47,18 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <a
-              href="#"
+            <Link
+              href="/login"
               className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors"
             >
               ログイン
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/register"
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               無料で始める
-            </a>
+            </Link>
           </div>
 
           {/* Mobile Menu Button */}
@@ -86,15 +86,16 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="pt-2 flex flex-col gap-2">
-            <a href="#" className="text-center text-sm font-medium text-gray-600 py-2">
+            <Link href="/login" className="text-center text-sm font-medium text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
               ログイン
-            </a>
-            <a
-              href="#"
+            </Link>
+            <Link
+              href="/register"
+              onClick={() => setMenuOpen(false)}
               className="text-center bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-lg"
             >
               無料で始める
-            </a>
+            </Link>
           </div>
         </div>
       )}

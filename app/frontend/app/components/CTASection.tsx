@@ -23,7 +23,7 @@ export default function CTASection() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
-            href="#"
+            href="/register"
             className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold px-10 py-4 rounded-xl text-base transition-all shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5"
           >
             無料体験を申し込む
