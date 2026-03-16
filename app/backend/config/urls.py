@@ -12,4 +12,5 @@ urlpatterns = [
     path("api/v1/plans/", include("apps.plans.presentation.urls")),
     path("api/v1/plans/<uuid:plan_id>/tasks/", include("apps.tasks.presentation.urls")),
     path("api/v1/sessions/", include("apps.sessions.presentation.urls")),
+    path("api/v1/line/", include("apps.line_bot.presentation.urls")),
 ]

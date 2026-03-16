@@ -39,6 +39,7 @@ LOCAL_APPS = [
     "apps.plans",
     "apps.tasks",
     "apps.sessions",
+    "apps.line_bot",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -131,3 +132,7 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# LINE Bot 設定
+LINE_CHANNEL_SECRET: str = config("LINE_CHANNEL_SECRET", default="")
+LINE_CHANNEL_ACCESS_TOKEN: str = config("LINE_CHANNEL_ACCESS_TOKEN", default="")
