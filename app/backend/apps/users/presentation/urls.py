@@ -6,7 +6,7 @@ from __future__ import annotations
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .views import MeView, RegisterView
+from .views import LogoutView, MeView, RegisterView
 
 urlpatterns = [
     # POST /api/v1/auth/register/  → ユーザー登録
@@ -17,4 +17,6 @@ urlpatterns = [
     path("token/refresh/", TokenRefreshView.as_view(), name="auth-token-refresh"),
     # GET  /api/v1/auth/me/        → ログイン中ユーザー情報
     path("me/", MeView.as_view(), name="auth-me"),
+    # POST /api/v1/auth/logout/    → ログアウト（リフレッシュトークンの無効化）
+    path("logout/", LogoutView.as_view(), name="auth-logout"),
 ]

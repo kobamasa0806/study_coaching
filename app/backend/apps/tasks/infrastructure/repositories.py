@@ -85,6 +85,18 @@ class DjangoTaskRepository(AbstractTaskRepository):
         """計画IDに紐づくタスク数を返す。"""
         return TaskModel.objects.filter(plan_id=plan_id).count()
 
+    def add_actual_date(self, task_id: UUID, date_str: str) -> None:
+        """タスクの実績日付リストに日付を追加する（重複時はスキップ）。"""
+        try:
+            orm_task = TaskModel.objects.get(id=task_id)
+        except TaskModel.DoesNotExist:
+            return
+        dates = list(orm_task.actual_dates or [])
+        if date_str not in dates:
+            dates.append(date_str)
+            dates.sort()
+            TaskModel.objects.filter(id=task_id).update(actual_dates=dates)
+
     def _to_entity(self, orm_task: TaskModel) -> Task:
         """ORM モデルをドメインエンティティに変換する。"""
         return Task(

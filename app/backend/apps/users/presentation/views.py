@@ -9,6 +9,8 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..application.use_cases import RegisterUserCommand, RegisterUserUseCase
 from ..infrastructure.repositories import DjangoUserRepository
@@ -65,3 +67,28 @@ class MeView(APIView):
             }
         )
         return Response(response_serializer.data)
+
+
+class LogoutView(APIView):
+    """ログアウトエンドポイント。リフレッシュトークンをブラックリストに追加する。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        refresh_token = request.data.get("refresh")
+        if not refresh_token:
+            return Response(
+                {"error": {"code": "MISSING_TOKEN", "message": "リフレッシュトークンが必要です。"}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+        except TokenError:
+            return Response(
+                {"error": {"code": "INVALID_TOKEN", "message": "無効なトークンです。"}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

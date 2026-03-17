@@ -11,6 +11,8 @@ from uuid import UUID
 
 from django.utils import timezone as django_timezone
 
+from apps.tasks.domain.repositories import AbstractTaskRepository
+
 from ..domain.models import ConversationState, ConversationStateType, StudyRecord
 from ..domain.repositories import (
     AbstractConversationStateRepository,
@@ -313,6 +315,7 @@ class HandleEndTimeResult:
 class HandleEndTimeAndSaveUseCase:
     """
     終了時刻を受け取り、学習時間を計算して学習記録を保存するユースケース。
+    保存後、対応タスクの actual_dates にも学習日を反映する。
     """
 
     def __init__(
@@ -320,10 +323,12 @@ class HandleEndTimeAndSaveUseCase:
         conversation_state_repository: AbstractConversationStateRepository,
         study_record_repository: AbstractStudyRecordRepository,
         line_user_link_repository: AbstractLineUserLinkRepository,
+        task_repository: AbstractTaskRepository,
     ) -> None:
         self._conversation_state_repository = conversation_state_repository
         self._study_record_repository = study_record_repository
         self._line_user_link_repository = line_user_link_repository
+        self._task_repository = task_repository
 
     def execute(
         self,
@@ -368,6 +373,13 @@ class HandleEndTimeAndSaveUseCase:
             created_at=command.responded_at,
         )
         saved_record = self._study_record_repository.save(record)
+
+        # ガントチャートの実績日付にも学習日を反映する
+        if current_state.selected_task_id is not None:
+            self._task_repository.add_actual_date(
+                current_state.selected_task_id,
+                str(study_date),
+            )
 
         # 会話状態を削除して IDLE に戻す
         self._conversation_state_repository.delete(command.line_user_id)

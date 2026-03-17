@@ -7,10 +7,12 @@
 
 import Link from "next/link";
 import { BookOpen, CalendarDays, MessageSquare, ArrowRight } from "lucide-react";
+import DashboardHeader from "../components/DashboardHeader";
 
 export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
+      <DashboardHeader />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">ダッシュボード</h1>
         <p className="text-gray-500 text-sm mb-8">学習の進捗を確認しましょう。</p>

@@ -32,6 +32,7 @@ from rest_framework.views import APIView
 from apps.plans.infrastructure.models import PlanModel
 from apps.plans.infrastructure.repositories import DjangoPlanRepository
 from apps.tasks.infrastructure.models import TaskModel
+from apps.tasks.infrastructure.repositories import DjangoTaskRepository
 
 from ..application.use_cases import (
     GenerateLinkCodeCommand,
@@ -234,14 +235,14 @@ class LineWebhookView(APIView):
             return
 
         if data == "action=set_start_time":
-            # DatetimePicker の選択値は params.time に入る
-            time_value = params.time if params else None
+            # DatetimePicker の選択値は params["time"] に入る
+            time_value = params.get("time") if params else None
             if time_value:
                 self._process_start_time(line_user_id, time_value, event.reply_token)
             return
 
         if data == "action=set_end_time":
-            time_value = params.time if params else None
+            time_value = params.get("time") if params else None
             if time_value:
                 self._process_end_time(
                     line_user_id,
@@ -357,6 +358,7 @@ class LineWebhookView(APIView):
                 conversation_state_repository=state_repo,
                 study_record_repository=DjangoStudyRecordRepository(),
                 line_user_link_repository=DjangoLineUserLinkRepository(),
+                task_repository=DjangoTaskRepository(),
             )
             result = use_case.execute(
                 HandleEndTimeCommand(

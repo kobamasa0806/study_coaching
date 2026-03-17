@@ -17,7 +17,7 @@ type AuthState = {
 type UseAuthReturn = AuthState & {
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
 };
 
@@ -53,7 +53,7 @@ export function useAuth(): UseAuthReturn {
             setState({ user, isLoading: false, isAuthenticated: true });
           })
           .catch(() => {
-            apiLogout();
+            void apiLogout();
             setState({ user: null, isLoading: false, isAuthenticated: false });
           });
       });
@@ -71,8 +71,8 @@ export function useAuth(): UseAuthReturn {
     await handleLogin({ email: data.email, password: data.password });
   }, [handleLogin]);
 
-  const handleLogout = useCallback((): void => {
-    apiLogout();
+  const handleLogout = useCallback(async (): Promise<void> => {
+    await apiLogout();
     setState({ user: null, isLoading: false, isAuthenticated: false });
   }, []);
 

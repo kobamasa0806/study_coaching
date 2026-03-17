@@ -64,3 +64,8 @@ class AbstractTaskRepository(ABC):
     def count_by_plan_id(self, plan_id: UUID) -> int:
         """計画IDに紐づくタスク数を返す。"""
         ...
+
+    @abstractmethod
+    def add_actual_date(self, task_id: UUID, date_str: str) -> None:
+        """タスクの実績日付リストに日付を追加する（重複時はスキップ）。"""
+        ...

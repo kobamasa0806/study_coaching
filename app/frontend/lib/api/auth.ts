@@ -76,8 +76,22 @@ export async function getMe(): Promise<UserResponse> {
 }
 
 /**
- * ログアウト（ローカルのトークンを削除）
+ * ログアウト（バックエンドでリフレッシュトークンを無効化し、ローカルのトークンを削除）
+ * POST /api/v1/auth/logout/
  */
-export function logout(): void {
+export async function logout(): Promise<void> {
+  const refresh = localStorage.getItem("refresh_token");
+  if (refresh) {
+    // バックエンドでトークンをブラックリストに追加する（失敗してもローカルのトークンは削除する）
+    try {
+      await apiRequest<void>("/api/v1/auth/logout/", {
+        method: "POST",
+        body: { refresh },
+        requiresAuth: true,
+      });
+    } catch {
+      // バックエンドエラーは無視してローカルトークンを削除する
+    }
+  }
   clearTokens();
 }

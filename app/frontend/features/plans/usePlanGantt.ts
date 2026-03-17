@@ -53,9 +53,14 @@ export function usePlanGantt(): UsePlanGanttReturn {
 
   /** 初回ロード */
   useEffect(() => {
+    // StrictMode による二重実行を防ぐための ignore フラグ。
+    // クリーンアップ時に true になり、古い実行の副作用（API 呼び出し・状態更新）をキャンセルする。
+    let ignore = false;
+
     (async () => {
       try {
         let plans = await getPlans();
+        if (ignore) return;
 
         // 計画がなければデフォルト計画を作成する
         if (plans.length === 0) {
@@ -67,6 +72,7 @@ export function usePlanGantt(): UsePlanGanttReturn {
             description: "",
             target_date: targetDate.toISOString().slice(0, 10),
           });
+          if (ignore) return;
           plans = [newPlan];
         }
 
@@ -74,6 +80,8 @@ export function usePlanGantt(): UsePlanGanttReturn {
         setPlanId(plan.id);
 
         const tasks = await getTasks(plan.id);
+        if (ignore) return;
+
         tasks.forEach((t) => taskCacheRef.current.set(t.id, t));
 
         if (tasks.length === 0) {
@@ -88,6 +96,7 @@ export function usePlanGantt(): UsePlanGanttReturn {
           const created: GanttItem[] = [];
           for (const name of defaultNames) {
             const task = await createTask(plan.id, { title: name });
+            if (ignore) return;
             taskCacheRef.current.set(task.id, task);
             created.push(taskToGanttItem(task));
           }
@@ -96,6 +105,7 @@ export function usePlanGantt(): UsePlanGanttReturn {
           setItems(tasks.map(taskToGanttItem));
         }
       } catch {
+        if (ignore) return;
         // API エラー時はローカルストレージにフォールバック
         const saved = localStorage.getItem("studycoach-gantt-v1");
         if (saved) {
@@ -106,9 +116,13 @@ export function usePlanGantt(): UsePlanGanttReturn {
           }
         }
       } finally {
-        setIsLoading(false);
+        if (!ignore) setIsLoading(false);
       }
     })();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
   /** タスクを API に保存する（debounce 付き） */
