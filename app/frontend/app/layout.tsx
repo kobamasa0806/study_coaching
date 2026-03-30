@@ -11,7 +11,7 @@ const notoSansJP = Noto_Sans_JP({
 
 export const metadata: Metadata = {
   title: 'StudyCoach | 資格・試験合格のための学習コーチング',
-  description: '学習計画の作成から進捗記録、専門コーチとの1on1まで。あなたの合格を全力でサポートする学習コーチングサービス。',
+  description: '学習計画の作成から進捗記録、専門コーチとの1on1まで。あなたの合格を全力でサポートする学習継続支援サービス。',
 }
 
 export default function RootLayout({

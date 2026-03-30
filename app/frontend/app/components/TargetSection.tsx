@@ -2,40 +2,40 @@ import { AlertCircle, Clock, TrendingUp } from 'lucide-react'
 
 const targets = [
   {
-    icon: AlertCircle,
-    color: 'text-rose-500 bg-rose-50',
-    title: '独学で行き詰まっている方',
-    description: '参考書を読んでも理解が進まない、問題が解けないと感じている方。コーチが弱点を特定し、的確な学習方法を提案します。',
+    icon: Clock,
+    color: 'text-yellow-600 bg-yellow-50',
+    title: '仕事で時間が取れない社会人',
+    description: '忙しい中でも「いつ・何を・どれだけやるか」を明確にすることが重要です。ガントチャートで限られた時間を最大限に活用できます。',
   },
   {
-    icon: Clock,
-    color: 'text-amber-500 bg-amber-50',
-    title: '計画を立てても続かない方',
-    description: '学習計画を作っても三日坊主になってしまう方。定期的な1on1と進捗の可視化でモチベーションを維持します。',
+    icon: AlertCircle,
+    color: 'text-lime-600 bg-lime-50',
+    title: '計画倒れを繰り返している方',
+    description: '計画を立てても続かないのは、進捗を見える化できていないから。計画と実績の差異をリアルタイムで確認し、軌道修正を繰り返します。',
   },
   {
     icon: TrendingUp,
-    color: 'text-indigo-500 bg-indigo-50',
-    title: '確実に合格を目指したい方',
-    description: '一度で合格したい、合格保証がほしい方。データに基づいたコーチングで最短・確実な合格をサポートします。',
+    color: 'text-amber-600 bg-amber-50',
+    title: '確実に一発合格を目指したい方',
+    description: 'プロジェクトマネジメントで学習を管理し、リスクを早期発見。コーチのサポートで計画の遅延を防ぎ、確実な合格を目指します。',
   },
 ]
 
 export default function TargetSection() {
   return (
-    <section id="target" className="bg-gray-50 py-24">
+    <section id="target" className="bg-yellow-50 py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center mb-16">
-          <span className="inline-block text-indigo-600 text-sm font-semibold uppercase tracking-wider mb-3">
+          <span className="inline-block text-yellow-600 text-sm font-semibold uppercase tracking-wider mb-3">
             こんな方に
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
-            StudyCoachが力になれます
+            時間のない社会人こそ、プロジェクト管理を
           </h2>
           <p className="text-gray-500 text-lg max-w-xl mx-auto">
-            独学の限界を感じているすべての受験生を、
-            プロコーチが全力でサポートします。
+            感覚で勉強するのではなく、計画・実績・分析で
+            合格プロジェクトを確実に完遂しましょう。
           </p>
         </div>
 
@@ -46,7 +46,7 @@ export default function TargetSection() {
             return (
               <div
                 key={target.title}
-                className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                className="bg-white rounded-2xl p-8 shadow-sm border border-yellow-100 hover:shadow-md transition-shadow"
               >
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${target.color}`}>
                   <Icon className="w-6 h-6" />

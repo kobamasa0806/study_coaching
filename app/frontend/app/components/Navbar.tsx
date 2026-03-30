@@ -16,11 +16,11 @@ export default function Navbar() {
   const pathname = usePathname()
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-yellow-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 text-indigo-600 font-bold text-xl">
+          <Link href="/" className="flex items-center gap-2 text-yellow-600 font-bold text-xl">
             <BookOpen className="w-6 h-6" />
             <span>StudyCoach</span>
           </Link>
@@ -35,8 +35,8 @@ export default function Navbar() {
                   href={link.href}
                   className={`text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-indigo-600 font-semibold'
-                      : 'text-gray-600 hover:text-indigo-600'
+                      ? 'text-yellow-600 font-semibold'
+                      : 'text-gray-600 hover:text-yellow-600'
                   }`}
                 >
                   {link.label}
@@ -49,13 +49,13 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-indigo-600 transition-colors"
+              className="text-sm font-medium text-gray-600 hover:text-yellow-600 transition-colors"
             >
               ログイン
             </Link>
             <Link
               href="/register"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
+              className="bg-yellow-400 hover:bg-yellow-300 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
             >
               無料で始める
             </Link>
@@ -63,7 +63,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-gray-600 hover:text-indigo-600"
+            className="md:hidden text-gray-600 hover:text-yellow-600"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="メニュー"
           >
@@ -74,13 +74,13 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 py-4 space-y-3">
+        <div className="md:hidden bg-white border-t border-yellow-100 px-4 py-4 space-y-3">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="block text-gray-700 hover:text-indigo-600 font-medium py-2"
+              className="block text-gray-700 hover:text-yellow-600 font-medium py-2"
             >
               {link.label}
             </Link>
@@ -92,7 +92,7 @@ export default function Navbar() {
             <Link
               href="/register"
               onClick={() => setMenuOpen(false)}
-              className="text-center bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-lg"
+              className="text-center bg-yellow-400 text-gray-900 text-sm font-semibold px-4 py-2 rounded-lg"
             >
               無料で始める
             </Link>

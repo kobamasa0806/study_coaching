@@ -15,12 +15,12 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2 text-white font-bold text-xl mb-4">
-              <BookOpen className="w-6 h-6 text-indigo-400" />
+              <BookOpen className="w-6 h-6 text-yellow-400" />
               StudyCoach
             </Link>
             <p className="text-sm leading-relaxed text-gray-500">
-              学習計画・記録・分析・1on1コーチングで、
-              あなたの合格を全力サポートします。
+              資格取得はプロジェクトマネジメントで解決する。
+              ガントチャートとコーチングで合格を全力サポート。
             </p>
           </div>
 
