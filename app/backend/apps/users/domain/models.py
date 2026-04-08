@@ -18,3 +18,4 @@ class User:
     username: str
     is_active: bool
     created_at: datetime
+    cognito_sub: str | None = None  # AWS Cognito ユーザー ID（sub クレーム）

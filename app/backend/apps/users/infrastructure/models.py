@@ -51,6 +51,10 @@ class UserModel(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True, verbose_name="有効")
     is_staff = models.BooleanField(default=False, verbose_name="スタッフ")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="作成日時")
+    # AWS Cognito ユーザー ID（sub クレーム）。Cognito 認証を使用する場合に設定される
+    cognito_sub = models.CharField(
+        max_length=128, unique=True, null=True, blank=True, verbose_name="Cognito Sub"
+    )
 
     objects = UserModelManager()
 

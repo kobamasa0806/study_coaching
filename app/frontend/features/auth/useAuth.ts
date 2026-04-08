@@ -1,6 +1,6 @@
 /**
  * 認証状態を管理するカスタム hook。
- * トークンの保存・削除と認証済みユーザー情報の取得を担う。
+ * Cognito SDK 経由のトークン管理と認証済みユーザー情報の取得を担う。
  */
 "use client";
 
@@ -28,7 +28,10 @@ export function useAuth(): UseAuthReturn {
     isAuthenticated: false,
   });
 
-  /** 起動時にトークンが有効か確認してユーザー情報を取得する。 */
+  /**
+   * 起動時に Cognito の現在のセッションを確認してユーザー情報を取得する。
+   * Cognito SDK はローカルストレージに保存されたセッションを自動的に復元する。
+   */
   useEffect(() => {
     const token = localStorage.getItem("access_token");
     if (!token) {
@@ -41,16 +44,19 @@ export function useAuth(): UseAuthReturn {
         setState({ user, isLoading: false, isAuthenticated: true });
       })
       .catch(() => {
-        // アクセストークンが無効な場合はリフレッシュを試みる
-        const refresh = localStorage.getItem("refresh_token");
-        if (!refresh) {
-          setState({ user: null, isLoading: false, isAuthenticated: false });
-          return;
-        }
-        refreshToken(refresh)
-          .then(() => getMe())
+        // アクセストークンが期限切れの場合は Cognito SDK でセッションを更新する
+        refreshToken()
+          .then((tokens) => {
+            if (!tokens) {
+              setState({ user: null, isLoading: false, isAuthenticated: false });
+              return;
+            }
+            return getMe();
+          })
           .then((user) => {
-            setState({ user, isLoading: false, isAuthenticated: true });
+            if (user) {
+              setState({ user, isLoading: false, isAuthenticated: true });
+            }
           })
           .catch(() => {
             void apiLogout();
@@ -77,13 +83,11 @@ export function useAuth(): UseAuthReturn {
   }, []);
 
   const handleRefresh = useCallback(async (): Promise<boolean> => {
-    const refresh = localStorage.getItem("refresh_token");
-    if (!refresh) return false;
     try {
-      await refreshToken(refresh);
-      return true;
+      const tokens = await refreshToken();
+      return tokens !== null;
     } catch {
-      handleLogout();
+      await handleLogout();
       return false;
     }
   }, [handleLogout]);

@@ -1,36 +1,40 @@
 /**
  * 認証関連の API クライアント。
+ * ログイン・ログアウト・トークン更新は Cognito SDK を直接使用し、
+ * ユーザー登録とプロフィール取得はバックエンド API を使用する。
  */
 
-import type {
-  LoginRequest,
-  RegisterRequest,
-  TokenResponse,
-  UserResponse,
-} from "../types/auth";
+import {
+  cognitoSignIn,
+  cognitoSignOut,
+  getCognitoCurrentSession,
+  type CognitoTokens,
+} from "../cognito/client";
+import type { LoginRequest, RegisterRequest, UserResponse } from "../types/auth";
 import { apiRequest } from "./client";
 
-/** トークンをローカルストレージと Cookie の両方に保存する。 */
-function saveTokens(tokens: TokenResponse): void {
+/** Cognito トークンをローカルストレージと Cookie の両方に保存する。 */
+function saveTokens(tokens: CognitoTokens): void {
   // ローカルストレージ: JS からの参照用
-  localStorage.setItem("access_token", tokens.access);
-  localStorage.setItem("refresh_token", tokens.refresh);
-  // Cookie: middleware でのルート保護用
-  document.cookie = `access_token=${tokens.access}; path=/; SameSite=Strict`;
-  document.cookie = `refresh_token=${tokens.refresh}; path=/; SameSite=Strict`;
+  localStorage.setItem("access_token", tokens.accessToken);
+  localStorage.setItem("id_token", tokens.idToken);
+  localStorage.setItem("refresh_token", tokens.refreshToken);
+  // Cookie: Next.js middleware でのルート保護用
+  document.cookie = `access_token=${tokens.accessToken}; path=/; SameSite=Strict`;
 }
 
-/** トークンをローカルストレージと Cookie の両方から削除する。 */
+/** トークンをローカルストレージと Cookie から削除する。 */
 function clearTokens(): void {
   localStorage.removeItem("access_token");
+  localStorage.removeItem("id_token");
   localStorage.removeItem("refresh_token");
   document.cookie = "access_token=; path=/; max-age=0";
-  document.cookie = "refresh_token=; path=/; max-age=0";
 }
 
 /**
  * ユーザー登録
  * POST /api/v1/auth/register/
+ * Cognito と ローカル DB の両方にユーザーを作成する。
  */
 export async function register(data: RegisterRequest): Promise<UserResponse> {
   return apiRequest<UserResponse>("/api/v1/auth/register/", {
@@ -40,28 +44,24 @@ export async function register(data: RegisterRequest): Promise<UserResponse> {
 }
 
 /**
- * ログイン（JWT トークン取得）
- * POST /api/v1/auth/token/
+ * ログイン（Cognito 認証）
+ * Cognito SDK で直接認証し、取得したトークンを保存する。
  */
-export async function login(data: LoginRequest): Promise<TokenResponse> {
-  const tokens = await apiRequest<TokenResponse>("/api/v1/auth/token/", {
-    method: "POST",
-    body: data,
-  });
+export async function login(data: LoginRequest): Promise<CognitoTokens> {
+  const tokens = await cognitoSignIn(data.email, data.password);
   saveTokens(tokens);
   return tokens;
 }
 
 /**
  * アクセストークンの更新
- * POST /api/v1/auth/token/refresh/
+ * Cognito SDK の getSession を使って現在のセッションを更新する。
  */
-export async function refreshToken(refresh: string): Promise<TokenResponse> {
-  const tokens = await apiRequest<TokenResponse>("/api/v1/auth/token/refresh/", {
-    method: "POST",
-    body: { refresh },
-  });
-  saveTokens(tokens);
+export async function refreshToken(): Promise<CognitoTokens | null> {
+  const tokens = await getCognitoCurrentSession();
+  if (tokens) {
+    saveTokens(tokens);
+  }
   return tokens;
 }
 
@@ -76,22 +76,10 @@ export async function getMe(): Promise<UserResponse> {
 }
 
 /**
- * ログアウト（バックエンドでリフレッシュトークンを無効化し、ローカルのトークンを削除）
- * POST /api/v1/auth/logout/
+ * ログアウト
+ * Cognito でグローバルサインアウトし、ローカルのトークンを削除する。
  */
 export async function logout(): Promise<void> {
-  const refresh = localStorage.getItem("refresh_token");
-  if (refresh) {
-    // バックエンドでトークンをブラックリストに追加する（失敗してもローカルのトークンは削除する）
-    try {
-      await apiRequest<void>("/api/v1/auth/logout/", {
-        method: "POST",
-        body: { refresh },
-        requiresAuth: true,
-      });
-    } catch {
-      // バックエンドエラーは無視してローカルトークンを削除する
-    }
-  }
+  cognitoSignOut();
   clearTokens();
 }

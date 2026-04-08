@@ -24,6 +24,11 @@ class AbstractUserRepository(ABC):
         ...
 
     @abstractmethod
-    def create(self, email: str, username: str, password: str) -> User:
+    def find_by_cognito_sub(self, cognito_sub: str) -> User | None:
+        """Cognito sub でユーザーを検索する。"""
+        ...
+
+    @abstractmethod
+    def create(self, email: str, username: str, password: str, cognito_sub: str | None = None) -> User:
         """新規ユーザーを作成する（パスワードはハッシュ化して保存）。"""
         ...

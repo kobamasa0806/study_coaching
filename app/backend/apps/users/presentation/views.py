@@ -9,16 +9,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..application.use_cases import RegisterUserCommand, RegisterUserUseCase
+from ..infrastructure.cognito_service import CognitoService
 from ..infrastructure.repositories import DjangoUserRepository
 from .serializers import RegisterSerializer, UserResponseSerializer
 
 
 class RegisterView(APIView):
-    """ユーザー登録エンドポイント。"""
+    """ユーザー登録エンドポイント。Cognito とローカル DB の両方にユーザーを作成する。"""
 
     permission_classes = [AllowAny]
 
@@ -31,7 +30,10 @@ class RegisterView(APIView):
             )
 
         try:
-            use_case = RegisterUserUseCase(DjangoUserRepository())
+            use_case = RegisterUserUseCase(
+                user_repository=DjangoUserRepository(),
+                cognito_service=CognitoService(),
+            )
             user = use_case.execute(
                 RegisterUserCommand(
                     email=serializer.validated_data["email"],
@@ -46,7 +48,12 @@ class RegisterView(APIView):
             )
 
         response_serializer = UserResponseSerializer(
-            {"id": user.id, "email": user.email, "username": user.username, "created_at": user.created_at}
+            {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "created_at": user.created_at,
+            }
         )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -70,25 +77,13 @@ class MeView(APIView):
 
 
 class LogoutView(APIView):
-    """ログアウトエンドポイント。リフレッシュトークンをブラックリストに追加する。"""
+    """
+    ログアウトエンドポイント。
+    Cognito 認証ではトークンの無効化はフロントエンド側（Cognito SDK）で行う。
+    このエンドポイントはサーバーサイドのセッション終了処理が必要な場合のために残す。
+    """
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request: Request) -> Response:
-        refresh_token = request.data.get("refresh")
-        if not refresh_token:
-            return Response(
-                {"error": {"code": "MISSING_TOKEN", "message": "リフレッシュトークンが必要です。"}},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        except TokenError:
-            return Response(
-                {"error": {"code": "INVALID_TOKEN", "message": "無効なトークンです。"}},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         return Response(status=status.HTTP_204_NO_CONTENT)

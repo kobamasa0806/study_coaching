@@ -15,12 +15,6 @@ export type LoginRequest = {
   password: string; // パスワード
 };
 
-/** JWT トークンレスポンスの型 */
-export type TokenResponse = {
-  access: string;  // アクセストークン（短期間有効・API リクエストに使用）
-  refresh: string; // リフレッシュトークン（長期間有効・アクセストークン更新に使用）
-};
-
 /** ユーザー情報レスポンスの型 */
 export type UserResponse = {
   id: string;         // ユーザーID（UUID）
@@ -35,4 +29,10 @@ export type ApiError = {
     code: string;                               // エラーコード（例: "NOT_FOUND", "VALIDATION_ERROR"）
     message: string | Record<string, string[]>; // エラーメッセージ（フィールドエラーの場合はオブジェクト形式）
   };
+};
+
+/** Cognito 認証エラーの型 */
+export type CognitoAuthError = {
+  code: string;    // Cognito エラーコード（例: "NotAuthorizedException", "UserNotFoundException"）
+  message: string; // エラーメッセージ
 };

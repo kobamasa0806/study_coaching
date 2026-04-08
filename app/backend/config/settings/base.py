@@ -4,7 +4,6 @@ Django 基本設定。
 """
 from __future__ import annotations
 
-from datetime import timedelta
 from pathlib import Path
 
 from decouple import config
@@ -30,8 +29,6 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
-    "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
 ]
 
@@ -101,7 +98,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Django REST Framework 設定
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "apps.users.infrastructure.cognito_authenticator.CognitoJWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -111,14 +108,10 @@ REST_FRAMEWORK = {
     ],
 }
 
-# JWT 設定
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
+# AWS Cognito 設定
+COGNITO_REGION: str = config("COGNITO_REGION", default="ap-northeast-1")
+COGNITO_USER_POOL_ID: str = config("COGNITO_USER_POOL_ID", default="")
+COGNITO_APP_CLIENT_ID: str = config("COGNITO_APP_CLIENT_ID", default="")
 
 # CORS 設定
 CORS_ALLOWED_ORIGINS: list[str] = config(
