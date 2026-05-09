@@ -46,7 +46,13 @@ class RegisterView(APIView):
             )
 
         response_serializer = UserResponseSerializer(
-            {"id": user.id, "email": user.email, "username": user.username, "created_at": user.created_at}
+            {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "is_staff": user.is_staff,
+                "created_at": user.created_at,
+            }
         )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -63,6 +69,7 @@ class MeView(APIView):
                 "id": user.id,
                 "email": user.email,
                 "username": user.username,
+                "is_staff": user.is_staff,
                 "created_at": user.created_at,
             }
         )

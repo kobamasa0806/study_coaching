@@ -26,6 +26,7 @@ export type UserResponse = {
   id: string;         // ユーザーID（UUID）
   email: string;      // メールアドレス
   username: string;   // ユーザー名
+  is_staff: boolean;  // 管理者フラグ
   created_at: string; // 作成日時（ISO 8601形式）
 };
 

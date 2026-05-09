@@ -37,6 +37,7 @@ const TEST_USER = {
   id: "user-123",
   email: "test@example.com",
   username: "テストユーザー",
+  is_staff: false,
   created_at: "2026-01-01T00:00:00Z",
 };
 
@@ -95,8 +96,8 @@ describe("useAuth", () => {
     const { result } = renderHook(() => useAuth());
     await act(async () => {});
 
-    act(() => {
-      result.current.logout();
+    await act(async () => {
+      await result.current.logout();
     });
 
     expect(mockLogout).toHaveBeenCalledTimes(1);

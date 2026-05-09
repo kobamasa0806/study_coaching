@@ -21,4 +21,5 @@ class UserResponseSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     email = serializers.EmailField()
     username = serializers.CharField()
+    is_staff = serializers.BooleanField()
     created_at = serializers.DateTimeField()
