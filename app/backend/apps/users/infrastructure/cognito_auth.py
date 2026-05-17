@@ -1,7 +1,7 @@
 """
 AWS Cognito JWT 認証クラス。
 DRF の認証バックエンドとして、Cognito が発行した id_token を検証する。
-検証成功時にユーザーが存在しなければ自動作成する（初回 Google ログイン対応）。
+検証成功時にユーザーが存在しなければ自動作成する（初回ログイン対応）。
 """
 from __future__ import annotations
 
@@ -80,11 +80,15 @@ def _verify_token(id_token: str) -> dict[str, Any]:
 def _get_or_create_user(claims: dict[str, Any]) -> Any:
     """
     Cognito クレームからユーザーを取得または作成する。
-    sub（Cognito ユーザー ID）をユーザー名の一意キーとして使用する。
+    email を一意キーとして使用する。
     """
     email: str = claims.get("email", "")
     cognito_sub: str = claims.get("sub", "")
-    name: str = claims.get("name", "") or claims.get("cognito:username", "") or email.split("@")[0]
+    name: str = (
+        claims.get("name", "")
+        or claims.get("cognito:username", "")
+        or email.split("@")[0]
+    )
 
     if not email or not cognito_sub:
         raise AuthenticationFailed("トークンに必要なクレームが含まれていません。")

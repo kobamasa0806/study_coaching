@@ -1,12 +1,13 @@
 /**
  * AWS Cognito 認証ユーティリティ。
- * PKCE フローによる Google OAuth 認証を実装する。
+ * Authorization Code + PKCE フローで Cognito Hosted UI に認証を委譲する。
  *
  * フロー:
- * 1. initiateGoogleLogin() → PKCE を生成して Cognito Hosted UI にリダイレクト
- * 2. Cognito が /callback?code=... にリダイレクト
- * 3. exchangeCodeForTokens() → code + code_verifier でトークンを取得
- * 4. saveTokens() でトークンを保存
+ * 1. initiateLogin() → PKCE + state を生成して Cognito Hosted UI にリダイレクト
+ * 2. Cognito Hosted UI でユーザーがログイン（メールアドレス＋パスワード）
+ * 3. Cognito が /callback?code=...&state=... にリダイレクト
+ * 4. exchangeCodeForTokens() → code + code_verifier でトークンを取得
+ * 5. saveTokens() でトークンを Cookie に保存
  */
 
 /** Cognito から受け取るトークンセット */
@@ -17,12 +18,13 @@ export type CognitoTokens = {
   expires_in: number;
 };
 
-/** 環境変数からCognito設定を取得する */
+/** 環境変数から Cognito 設定を取得する */
 function getConfig() {
   return {
     domain: process.env.NEXT_PUBLIC_COGNITO_DOMAIN ?? "",
     clientId: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID ?? "",
     redirectUri: process.env.NEXT_PUBLIC_COGNITO_REDIRECT_URI ?? "",
+    logoutUri: process.env.NEXT_PUBLIC_COGNITO_LOGOUT_URI ?? "",
   };
 }
 
@@ -51,22 +53,26 @@ function base64urlEncode(buffer: ArrayBuffer): string {
 
 /** Secure フラグ（HTTPS 環境のみ）と SameSite=Strict を付与した Cookie 属性を返す */
 function cookieAttributes(maxAgeSec: number): string {
-  const secure = typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
+  const secure =
+    typeof location !== "undefined" && location.protocol === "https:" ? "; Secure" : "";
   return `; path=/; SameSite=Strict${secure}; max-age=${maxAgeSec}`;
 }
 
 /** Cookie から指定名の値を取得する */
 function getCookieValue(name: string): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(?:^|; )${encodeURIComponent(name)}=([^;]*)`));
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${encodeURIComponent(name)}=([^;]*)`)
+  );
   return match ? decodeURIComponent(match[1]) : null;
 }
 
 // ---- トークン保存・取得 ----
 
 /**
- * トークンを Cookie のみに保存する（localStorage は使用しない）。
- * id_token: 1日, refresh_token: 30日
+ * トークンを Cookie のみに保存する。
+ * id_token: 1日（Cognito の id_token デフォルト有効期限に合わせる）
+ * refresh_token: 30日
  */
 export function saveTokens(tokens: CognitoTokens): void {
   document.cookie = `id_token=${encodeURIComponent(tokens.id_token)}${cookieAttributes(86400)}`;
@@ -75,8 +81,8 @@ export function saveTokens(tokens: CognitoTokens): void {
 
 /** Cookie からトークンを削除する */
 export function clearTokens(): void {
-  document.cookie = `id_token=; path=/; SameSite=Strict; max-age=0`;
-  document.cookie = `refresh_token=; path=/; SameSite=Strict; max-age=0`;
+  document.cookie = "id_token=; path=/; SameSite=Strict; max-age=0";
+  document.cookie = "refresh_token=; path=/; SameSite=Strict; max-age=0";
 }
 
 /** Cookie から id_token を取得する */
@@ -92,15 +98,16 @@ export function getRefreshToken(): string | null {
 // ---- OAuth フロー ----
 
 /**
- * Google ログインを開始する。
- * PKCE の code_verifier と CSRF 対策の state を sessionStorage に保存し、Cognito Hosted UI にリダイレクトする。
+ * Cognito Hosted UI へのログインフローを開始する。
+ * PKCE の code_verifier と CSRF 対策の state を sessionStorage に保存してリダイレクトする。
+ * Cognito Hosted UI 上でユーザーがメールアドレス＋パスワードを入力する。
  */
-export async function initiateGoogleLogin(): Promise<void> {
+export async function initiateLogin(): Promise<void> {
   const { domain, clientId, redirectUri } = getConfig();
   const codeVerifier = generateRandomString(64);
   const codeChallenge = base64urlEncode(await sha256(codeVerifier));
   // CSRF 対策: state パラメータで callback の正当性を検証する
-  const state = generateRandomString(64);
+  const state = generateRandomString(32);
 
   sessionStorage.setItem("pkce_code_verifier", codeVerifier);
   sessionStorage.setItem("pkce_state", state);
@@ -110,7 +117,6 @@ export async function initiateGoogleLogin(): Promise<void> {
     client_id: clientId,
     redirect_uri: redirectUri,
     scope: "openid email profile",
-    identity_provider: "Google",
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     state,
@@ -146,7 +152,6 @@ export async function exchangeCodeForTokens(code: string): Promise<CognitoTokens
   });
 
   if (!response.ok) {
-    // Cognito の内部エラーメッセージをユーザーに露出しない
     throw new Error("トークン交換に失敗しました。しばらくしてからお試しください。");
   }
 
@@ -155,7 +160,7 @@ export async function exchangeCodeForTokens(code: string): Promise<CognitoTokens
 }
 
 /**
- * リフレッシュトークンを使ってid_tokenを更新する。
+ * リフレッシュトークンを使って id_token を更新する。
  * 失敗した場合は null を返す。
  */
 export async function refreshIdToken(): Promise<CognitoTokens | null> {
@@ -178,7 +183,7 @@ export async function refreshIdToken(): Promise<CognitoTokens | null> {
 
     if (!response.ok) return null;
 
-    const tokens = await response.json() as CognitoTokens;
+    const tokens = (await response.json()) as CognitoTokens;
     // リフレッシュレスポンスには refresh_token が含まれないため既存のものを引き継ぐ
     tokens.refresh_token = refreshToken;
     saveTokens(tokens);
@@ -189,12 +194,10 @@ export async function refreshIdToken(): Promise<CognitoTokens | null> {
 }
 
 /**
- * Cognito のリフレッシュトークンをサーバー側で失効させてからログアウトする。
- * これにより、Cookie が盗まれた場合でもリフレッシュトークンを悪用できなくなる。
+ * リフレッシュトークンをサーバー側で失効させてからログアウトする。
  */
 export async function cognitoLogout(): Promise<void> {
-  const { domain, clientId } = getConfig();
-  const logoutUri = process.env.NEXT_PUBLIC_COGNITO_LOGOUT_URI ?? "";
+  const { domain, clientId, logoutUri } = getConfig();
   const refreshToken = getRefreshToken();
 
   // リフレッシュトークンを Cognito サーバー側で失効させる
@@ -203,7 +206,10 @@ export async function cognitoLogout(): Promise<void> {
       await fetch(`${domain}/oauth2/revoke`, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ client_id: clientId, token: refreshToken }).toString(),
+        body: new URLSearchParams({
+          client_id: clientId,
+          token: refreshToken,
+        }).toString(),
       });
     } catch {
       // 失効リクエストが失敗してもローカルのトークン削除とリダイレクトは続行する

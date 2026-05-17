@@ -111,8 +111,6 @@ AWS_COGNITO_APP_CLIENT_ID: str = config("AWS_COGNITO_APP_CLIENT_ID", default="")
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "apps.users.infrastructure.cognito_auth.CognitoJWTAuthentication",
-        # 管理画面用に simplejwt も残す
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",

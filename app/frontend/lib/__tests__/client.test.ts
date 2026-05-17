@@ -1,28 +1,18 @@
 /**
  * API クライアント (lib/api/client.ts) のユニットテスト。
+ * Cognito id_token を Cookie から取得する実装に対応。
  */
 
 // fetch をモックする
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
-// localStorage をモックする
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-  };
-})();
-Object.defineProperty(global, "localStorage", { value: localStorageMock });
-
 import { apiRequest } from "../api/client";
 
 beforeEach(() => {
   mockFetch.mockClear();
-  localStorageMock.clear();
+  // Cookie をリセットする
+  document.cookie = "id_token=; max-age=0";
 });
 
 describe("apiRequest", () => {
@@ -56,8 +46,8 @@ describe("apiRequest", () => {
     expect(options.body).toBe(JSON.stringify({ email: "test@example.com" }));
   });
 
-  it("requiresAuth=true のとき Authorization ヘッダーが付与されること", async () => {
-    localStorageMock.setItem("access_token", "my-jwt-token");
+  it("requiresAuth=true のとき Cookie の id_token が Authorization ヘッダーに付与されること", async () => {
+    document.cookie = "id_token=my-cognito-id-token";
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({}),
@@ -66,7 +56,7 @@ describe("apiRequest", () => {
     await apiRequest("/api/v1/auth/me/", { requiresAuth: true });
 
     const [, options] = mockFetch.mock.calls[0];
-    expect(options.headers["Authorization"]).toBe("Bearer my-jwt-token");
+    expect(options.headers["Authorization"]).toBe("Bearer my-cognito-id-token");
   });
 
   it("requiresAuth=false のとき Authorization ヘッダーが付与されないこと", async () => {
@@ -75,7 +65,7 @@ describe("apiRequest", () => {
       json: async () => ({}),
     });
 
-    await apiRequest("/api/v1/auth/token/", { method: "POST" });
+    await apiRequest("/api/v1/test/", { method: "POST" });
 
     const [, options] = mockFetch.mock.calls[0];
     expect(options.headers["Authorization"]).toBeUndefined();

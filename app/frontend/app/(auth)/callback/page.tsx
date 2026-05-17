@@ -2,7 +2,7 @@
 
 /**
  * Cognito OAuth コールバックページ。
- * Cognito から ?code=... でリダイレクトされたときにトークン交換を行い、/dashboard へ遷移する。
+ * Cognito から ?code=...&state=... でリダイレクトされたときにトークン交換を行い、/dashboard へ遷移する。
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,7 +20,6 @@ function CallbackHandler() {
     const returnedState = searchParams.get("state");
 
     if (errorParam) {
-      // エラー種別のみ表示し、Cognito の内部メッセージは露出しない
       setError("認証がキャンセルされたか、エラーが発生しました。ログインをやり直してください。");
       return;
     }
@@ -44,7 +43,8 @@ function CallbackHandler() {
         router.replace("/dashboard");
       })
       .catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : "不明なエラーが発生しました。";
+        const message =
+          err instanceof Error ? err.message : "不明なエラーが発生しました。";
         setError(message);
       });
   }, [searchParams, router]);

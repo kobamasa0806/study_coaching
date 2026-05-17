@@ -10,7 +10,7 @@ import {
   clearTokens,
   cognitoLogout,
   getIdToken,
-  initiateGoogleLogin,
+  initiateLogin,
   refreshIdToken,
 } from "@/lib/auth/cognito";
 import type { UserResponse } from "@/lib/types/auth";
@@ -22,7 +22,7 @@ type AuthState = {
 };
 
 type UseAuthReturn = AuthState & {
-  loginWithGoogle: () => Promise<void>;
+  loginWithCognito: () => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
 };
@@ -34,7 +34,7 @@ export function useAuth(): UseAuthReturn {
     isAuthenticated: false,
   });
 
-  /** 起動時にid_tokenが存在するか確認してユーザー情報を取得する */
+  /** 起動時に id_token が存在するか確認してユーザー情報を取得する */
   useEffect(() => {
     const idToken = getIdToken();
     if (!idToken) {
@@ -63,9 +63,9 @@ export function useAuth(): UseAuthReturn {
       });
   }, []);
 
-  const handleLoginWithGoogle = useCallback(async (): Promise<void> => {
-    await initiateGoogleLogin();
-    // リダイレクトが発生するため、この後の処理は /callback で行う
+  const handleLoginWithCognito = useCallback(async (): Promise<void> => {
+    await initiateLogin();
+    // Cognito Hosted UI へリダイレクトするため、この後の処理は /callback で行う
   }, []);
 
   const handleLogout = useCallback(async (): Promise<void> => {
@@ -84,7 +84,7 @@ export function useAuth(): UseAuthReturn {
 
   return {
     ...state,
-    loginWithGoogle: handleLoginWithGoogle,
+    loginWithCognito: handleLoginWithCognito,
     logout: handleLogout,
     refresh: handleRefresh,
   };

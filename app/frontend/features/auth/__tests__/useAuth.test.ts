@@ -1,37 +1,32 @@
 /**
  * useAuth hook の単体テスト。
- * API 呼び出しはすべてモックする。
+ * Cognito ベースの認証（Cookie に id_token を保存）に対応。
  */
 
-// API モジュールをモックする
+// API・Cognito ユーティリティをモックする
 jest.mock("@/lib/api/auth", () => ({
-  login: jest.fn(),
-  register: jest.fn(),
   getMe: jest.fn(),
-  refreshToken: jest.fn(),
-  logout: jest.fn(),
+}));
+
+jest.mock("@/lib/auth/cognito", () => ({
+  getIdToken: jest.fn(),
+  initiateLogin: jest.fn(),
+  cognitoLogout: jest.fn(),
+  refreshIdToken: jest.fn(),
+  clearTokens: jest.fn(),
 }));
 
 import { act, renderHook } from "@testing-library/react";
 import * as authApi from "@/lib/api/auth";
+import * as cognito from "@/lib/auth/cognito";
 import { useAuth } from "../useAuth";
 
-const mockLogin = authApi.login as jest.Mock;
-const mockRegister = authApi.register as jest.Mock;
 const mockGetMe = authApi.getMe as jest.Mock;
-const mockLogout = authApi.logout as jest.Mock;
-
-// localStorage をモックする
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] ?? null,
-    setItem: (key: string, value: string) => { store[key] = value; },
-    removeItem: (key: string) => { delete store[key]; },
-    clear: () => { store = {}; },
-  };
-})();
-Object.defineProperty(global, "localStorage", { value: localStorageMock });
+const mockGetIdToken = cognito.getIdToken as jest.Mock;
+const mockInitiateLogin = cognito.initiateLogin as jest.Mock;
+const mockCognitoLogout = cognito.cognitoLogout as jest.Mock;
+const mockRefreshIdToken = cognito.refreshIdToken as jest.Mock;
+const mockClearTokens = cognito.clearTokens as jest.Mock;
 
 const TEST_USER = {
   id: "user-123",
@@ -43,23 +38,25 @@ const TEST_USER = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  localStorageMock.clear();
+  // デフォルト: トークンなし
+  mockGetIdToken.mockReturnValue(null);
 });
 
 describe("useAuth", () => {
-  it("トークンがない場合は未認証状態で初期化されること", async () => {
-    const { result } = renderHook(() => useAuth());
+  it("id_token がない場合は未認証状態で初期化されること", async () => {
+    mockGetIdToken.mockReturnValue(null);
 
-    // isLoading が解決されるまで待つ
+    const { result } = renderHook(() => useAuth());
     await act(async () => {});
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.user).toBeNull();
     expect(result.current.isLoading).toBe(false);
+    expect(mockGetMe).not.toHaveBeenCalled();
   });
 
-  it("トークンがある場合は getMe を呼んでユーザーを設定すること", async () => {
-    localStorageMock.setItem("access_token", "valid-token");
+  it("id_token がある場合は getMe を呼んでユーザーを設定すること", async () => {
+    mockGetIdToken.mockReturnValue("valid-id-token");
     mockGetMe.mockResolvedValueOnce(TEST_USER);
 
     const { result } = renderHook(() => useAuth());
@@ -68,30 +65,60 @@ describe("useAuth", () => {
     expect(mockGetMe).toHaveBeenCalledTimes(1);
     expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.user).toEqual(TEST_USER);
+    expect(result.current.isLoading).toBe(false);
   });
 
-  it("login を呼ぶとユーザーが設定されること", async () => {
-    mockLogin.mockResolvedValueOnce({ access: "token", refresh: "refresh" });
-    mockGetMe.mockResolvedValueOnce(TEST_USER);
+  it("getMe が失敗してリフレッシュに成功した場合はユーザーを設定すること", async () => {
+    mockGetIdToken.mockReturnValue("expired-id-token");
+    mockGetMe
+      .mockRejectedValueOnce(new Error("401"))
+      .mockResolvedValueOnce(TEST_USER);
+    mockRefreshIdToken.mockResolvedValueOnce({
+      id_token: "new-id-token",
+      access_token: "new-access-token",
+      refresh_token: "existing-refresh-token",
+      expires_in: 86400,
+    });
+
+    const { result } = renderHook(() => useAuth());
+    await act(async () => {});
+
+    expect(mockRefreshIdToken).toHaveBeenCalledTimes(1);
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user).toEqual(TEST_USER);
+  });
+
+  it("getMe とリフレッシュが両方失敗した場合は未認証状態になること", async () => {
+    mockGetIdToken.mockReturnValue("expired-id-token");
+    mockGetMe.mockRejectedValue(new Error("401"));
+    mockRefreshIdToken.mockResolvedValueOnce(null);
+
+    const { result } = renderHook(() => useAuth());
+    await act(async () => {});
+
+    expect(mockClearTokens).toHaveBeenCalledTimes(1);
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.user).toBeNull();
+  });
+
+  it("loginWithCognito を呼ぶと initiateLogin が呼ばれること", async () => {
+    mockGetIdToken.mockReturnValue(null);
+    mockInitiateLogin.mockResolvedValueOnce(undefined);
 
     const { result } = renderHook(() => useAuth());
     await act(async () => {});
 
     await act(async () => {
-      await result.current.login({ email: "test@example.com", password: "password123" });
+      await result.current.loginWithCognito();
     });
 
-    expect(mockLogin).toHaveBeenCalledWith({
-      email: "test@example.com",
-      password: "password123",
-    });
-    expect(result.current.isAuthenticated).toBe(true);
-    expect(result.current.user).toEqual(TEST_USER);
+    expect(mockInitiateLogin).toHaveBeenCalledTimes(1);
   });
 
-  it("logout を呼ぶとユーザーがクリアされること", async () => {
-    localStorageMock.setItem("access_token", "valid-token");
+  it("logout を呼ぶと cognitoLogout が呼ばれること", async () => {
+    mockGetIdToken.mockReturnValue("valid-id-token");
     mockGetMe.mockResolvedValueOnce(TEST_USER);
+    mockCognitoLogout.mockResolvedValueOnce(undefined);
 
     const { result } = renderHook(() => useAuth());
     await act(async () => {});
@@ -100,29 +127,6 @@ describe("useAuth", () => {
       await result.current.logout();
     });
 
-    expect(mockLogout).toHaveBeenCalledTimes(1);
-    expect(result.current.isAuthenticated).toBe(false);
-    expect(result.current.user).toBeNull();
-  });
-
-  it("register を呼ぶと登録後に自動ログインすること", async () => {
-    mockRegister.mockResolvedValueOnce(TEST_USER);
-    mockLogin.mockResolvedValueOnce({ access: "token", refresh: "refresh" });
-    mockGetMe.mockResolvedValueOnce(TEST_USER);
-
-    const { result } = renderHook(() => useAuth());
-    await act(async () => {});
-
-    await act(async () => {
-      await result.current.register({
-        email: "new@example.com",
-        username: "新規ユーザー",
-        password: "password123",
-      });
-    });
-
-    expect(mockRegister).toHaveBeenCalledTimes(1);
-    expect(mockLogin).toHaveBeenCalledTimes(1);
-    expect(result.current.isAuthenticated).toBe(true);
+    expect(mockCognitoLogout).toHaveBeenCalledTimes(1);
   });
 });
