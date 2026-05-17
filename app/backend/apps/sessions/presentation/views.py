@@ -90,10 +90,11 @@ class SessionDetailView(APIView):
                 {"error": {"code": "NOT_FOUND", "message": str(e)}},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        except PermissionError as e:
+        except PermissionError:
+            # 他ユーザーのリソースを 403 で返すとリソース存在が暴露されるため 404 に統一する
             return Response(
-                {"error": {"code": "FORBIDDEN", "message": str(e)}},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": {"code": "NOT_FOUND", "message": "リソースが見つかりません。"}},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         response_serializer = SessionResponseSerializer(_session_to_dict(session))
@@ -125,10 +126,11 @@ class SessionDetailView(APIView):
                 {"error": {"code": "BAD_REQUEST", "message": str(e)}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except PermissionError as e:
+        except PermissionError:
+            # 他ユーザーのリソースを 403 で返すとリソース存在が暴露されるため 404 に統一する
             return Response(
-                {"error": {"code": "FORBIDDEN", "message": str(e)}},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": {"code": "NOT_FOUND", "message": "リソースが見つかりません。"}},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         response_serializer = SessionResponseSerializer(_session_to_dict(session))
@@ -144,10 +146,11 @@ class SessionDetailView(APIView):
                 {"error": {"code": "BAD_REQUEST", "message": str(e)}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except PermissionError as e:
+        except PermissionError:
+            # 他ユーザーのリソースを 403 で返すとリソース存在が暴露されるため 404 に統一する
             return Response(
-                {"error": {"code": "FORBIDDEN", "message": str(e)}},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": {"code": "NOT_FOUND", "message": "リソースが見つかりません。"}},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

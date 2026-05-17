@@ -4,6 +4,8 @@
 """
 from __future__ import annotations
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 
 
@@ -13,6 +15,14 @@ class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField()
     username = serializers.CharField(max_length=150)
     password = serializers.CharField(min_length=8, write_only=True)
+
+    def validate_password(self, value: str) -> str:
+        """Django 標準のパスワードバリデーターを適用する。"""
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
 
 
 class UserResponseSerializer(serializers.Serializer):

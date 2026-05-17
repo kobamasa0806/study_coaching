@@ -21,10 +21,16 @@ audit_logger = logging.getLogger("audit")
 
 
 def _get_client_ip(request: Request) -> str:
-    """リクエスト元の IP アドレスを取得する。"""
+    """
+    リクエスト元の IP アドレスを取得する。
+    X-Forwarded-For の最初の値はクライアントが偽装できるため、
+    リバースプロキシが付加する最後の値（最も信頼できる値）を使用する。
+    """
     forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        ips = [ip.strip() for ip in forwarded.split(",") if ip.strip()]
+        if ips:
+            return ips[-1]
     return request.META.get("REMOTE_ADDR", "unknown")
 
 

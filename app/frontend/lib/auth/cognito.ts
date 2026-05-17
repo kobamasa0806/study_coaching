@@ -189,13 +189,27 @@ export async function refreshIdToken(): Promise<CognitoTokens | null> {
 }
 
 /**
- * Cognito Hosted UI のログアウトURLにリダイレクトする。
- * リダイレクト先は環境変数から取得する（Open Redirect 対策）。
+ * Cognito のリフレッシュトークンをサーバー側で失効させてからログアウトする。
+ * これにより、Cookie が盗まれた場合でもリフレッシュトークンを悪用できなくなる。
  */
-export function cognitoLogout(): void {
+export async function cognitoLogout(): Promise<void> {
   const { domain, clientId } = getConfig();
-  // 環境変数で指定された固定URIのみを使用する
   const logoutUri = process.env.NEXT_PUBLIC_COGNITO_LOGOUT_URI ?? "";
+  const refreshToken = getRefreshToken();
+
+  // リフレッシュトークンを Cognito サーバー側で失効させる
+  if (refreshToken) {
+    try {
+      await fetch(`${domain}/oauth2/revoke`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ client_id: clientId, token: refreshToken }).toString(),
+      });
+    } catch {
+      // 失効リクエストが失敗してもローカルのトークン削除とリダイレクトは続行する
+    }
+  }
+
   clearTokens();
 
   const params = new URLSearchParams({

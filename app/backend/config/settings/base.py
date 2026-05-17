@@ -133,11 +133,14 @@ REST_FRAMEWORK = {
 
 # JWT 設定
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    # アクセストークンは短命にして盗難時のリスクを低減する（推奨: 15分以下）
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
+    # SECRET_KEY と分離した専用署名キーを使用する
+    "SIGNING_KEY": config("JWT_SIGNING_KEY", default=config("SECRET_KEY")),
 }
 
 # CORS 設定（ホワイトスペースを除去して設定ミスを防ぐ）
@@ -156,8 +159,45 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 # リファラーポリシーを制限する
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
-# Content Security Policy は開発段階のためレポートのみ（本番では enforce に変更する）
+# Cookie の SameSite 属性を Strict にして CSRF 攻撃を防ぐ
+SESSION_COOKIE_SAMESITE = "Strict"
+CSRF_COOKIE_SAMESITE = "Strict"
 # SECURE_SSL_REDIRECT・SESSION_COOKIE_SECURE・CSRF_COOKIE_SECURE は production.py で設定する
+
+# ロギング設定
+# audit ロガーを有効化して管理者アクセスの証跡を残す
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "audit": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+}
 
 # 国際化設定
 LANGUAGE_CODE = "ja"

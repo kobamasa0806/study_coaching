@@ -89,10 +89,11 @@ class PlanDetailView(APIView):
                 {"error": {"code": "NOT_FOUND", "message": str(e)}},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        except PermissionError as e:
+        except PermissionError:
+            # 他ユーザーのリソースを 403 で返すとリソース存在が暴露されるため 404 に統一する
             return Response(
-                {"error": {"code": "FORBIDDEN", "message": str(e)}},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": {"code": "NOT_FOUND", "message": "リソースが見つかりません。"}},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         response_serializer = PlanResponseSerializer(_plan_to_dict(plan))
@@ -124,10 +125,11 @@ class PlanDetailView(APIView):
                 {"error": {"code": "NOT_FOUND", "message": str(e)}},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        except PermissionError as e:
+        except PermissionError:
+            # 他ユーザーのリソースを 403 で返すとリソース存在が暴露されるため 404 に統一する
             return Response(
-                {"error": {"code": "FORBIDDEN", "message": str(e)}},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": {"code": "NOT_FOUND", "message": "リソースが見つかりません。"}},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         response_serializer = PlanResponseSerializer(_plan_to_dict(plan))
@@ -143,10 +145,11 @@ class PlanDetailView(APIView):
                 {"error": {"code": "NOT_FOUND", "message": str(e)}},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        except PermissionError as e:
+        except PermissionError:
+            # 他ユーザーのリソースを 403 で返すとリソース存在が暴露されるため 404 に統一する
             return Response(
-                {"error": {"code": "FORBIDDEN", "message": str(e)}},
-                status=status.HTTP_403_FORBIDDEN,
+                {"error": {"code": "NOT_FOUND", "message": "リソースが見つかりません。"}},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -23,7 +23,7 @@ type AuthState = {
 
 type UseAuthReturn = AuthState & {
   loginWithGoogle: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refresh: () => Promise<boolean>;
 };
 
@@ -68,8 +68,8 @@ export function useAuth(): UseAuthReturn {
     // リダイレクトが発生するため、この後の処理は /callback で行う
   }, []);
 
-  const handleLogout = useCallback((): void => {
-    cognitoLogout();
+  const handleLogout = useCallback(async (): Promise<void> => {
+    await cognitoLogout();
   }, []);
 
   const handleRefresh = useCallback(async (): Promise<boolean> => {
