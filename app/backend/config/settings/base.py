@@ -77,6 +77,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # データベース設定（PostgreSQL）
+# DB_SSLMODE: 本番では "require"、開発では "prefer"（デフォルト）に設定する
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -85,6 +86,9 @@ DATABASES = {
         "PASSWORD": config("DB_PASSWORD"),
         "HOST": config("DB_HOST", default="localhost"),
         "PORT": config("DB_PORT", default="5432"),
+        "OPTIONS": {
+            "sslmode": config("DB_SSLMODE", default="prefer"),
+        },
     }
 }
 
@@ -99,9 +103,16 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
+# AWS Cognito 設定
+AWS_COGNITO_REGION: str = config("AWS_COGNITO_REGION", default="ap-northeast-1")
+AWS_COGNITO_USER_POOL_ID: str = config("AWS_COGNITO_USER_POOL_ID", default="")
+AWS_COGNITO_APP_CLIENT_ID: str = config("AWS_COGNITO_APP_CLIENT_ID", default="")
+
 # Django REST Framework 設定
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
+        "apps.users.infrastructure.cognito_auth.CognitoJWTAuthentication",
+        # 管理画面用に simplejwt も残す
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -110,6 +121,15 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
     ],
+    # レート制限: 未認証 20回/分、認証済み 100回/分
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "20/minute",
+        "user": "100/minute",
+    },
 }
 
 # JWT 設定
@@ -121,10 +141,24 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# CORS 設定
-CORS_ALLOWED_ORIGINS: list[str] = config(
-    "CORS_ALLOWED_ORIGINS", default="http://localhost:3000"
-).split(",")
+# CORS 設定（ホワイトスペースを除去して設定ミスを防ぐ）
+CORS_ALLOWED_ORIGINS: list[str] = [
+    origin.strip()
+    for origin in config(
+        "CORS_ALLOWED_ORIGINS", default="http://localhost:3000"
+    ).split(",")
+    if origin.strip()
+]
+
+# セキュリティヘッダー設定
+# コンテンツタイプのスニッフィングを防止する
+SECURE_CONTENT_TYPE_NOSNIFF = True
+# クリックジャッキング攻撃を防止する
+X_FRAME_OPTIONS = "DENY"
+# リファラーポリシーを制限する
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+# Content Security Policy は開発段階のためレポートのみ（本番では enforce に変更する）
+# SECURE_SSL_REDIRECT・SESSION_COOKIE_SECURE・CSRF_COOKIE_SECURE は production.py で設定する
 
 # 国際化設定
 LANGUAGE_CODE = "ja"

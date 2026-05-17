@@ -1,12 +1,19 @@
 /**
  * 認証状態を管理するカスタム hook。
- * トークンの保存・削除と認証済みユーザー情報の取得を担う。
+ * Cognito id_token の有無でログイン状態を判定し、バックエンドからユーザー情報を取得する。
  */
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getMe, login, logout as apiLogout, refreshToken, register } from "@/lib/api/auth";
-import type { LoginRequest, RegisterRequest, UserResponse } from "@/lib/types/auth";
+import { getMe } from "@/lib/api/auth";
+import {
+  clearTokens,
+  cognitoLogout,
+  getIdToken,
+  initiateGoogleLogin,
+  refreshIdToken,
+} from "@/lib/auth/cognito";
+import type { UserResponse } from "@/lib/types/auth";
 
 type AuthState = {
   user: UserResponse | null;
@@ -15,9 +22,8 @@ type AuthState = {
 };
 
 type UseAuthReturn = AuthState & {
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
-  logout: () => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  logout: () => void;
   refresh: () => Promise<boolean>;
 };
 
@@ -28,10 +34,10 @@ export function useAuth(): UseAuthReturn {
     isAuthenticated: false,
   });
 
-  /** 起動時にトークンが有効か確認してユーザー情報を取得する。 */
+  /** 起動時にid_tokenが存在するか確認してユーザー情報を取得する */
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
+    const idToken = getIdToken();
+    if (!idToken) {
       setState({ user: null, isLoading: false, isAuthenticated: false });
       return;
     }
@@ -41,57 +47,44 @@ export function useAuth(): UseAuthReturn {
         setState({ user, isLoading: false, isAuthenticated: true });
       })
       .catch(() => {
-        // アクセストークンが無効な場合はリフレッシュを試みる
-        const refresh = localStorage.getItem("refresh_token");
-        if (!refresh) {
-          setState({ user: null, isLoading: false, isAuthenticated: false });
-          return;
-        }
-        refreshToken(refresh)
-          .then(() => getMe())
+        // id_token が期限切れの場合はリフレッシュを試みる
+        refreshIdToken()
+          .then((tokens) => {
+            if (!tokens) throw new Error("リフレッシュ失敗");
+            return getMe();
+          })
           .then((user) => {
             setState({ user, isLoading: false, isAuthenticated: true });
           })
           .catch(() => {
-            void apiLogout();
+            clearTokens();
             setState({ user: null, isLoading: false, isAuthenticated: false });
           });
       });
   }, []);
 
-  const handleLogin = useCallback(async (data: LoginRequest): Promise<void> => {
-    await login(data);
-    const user = await getMe();
-    setState({ user, isLoading: false, isAuthenticated: true });
+  const handleLoginWithGoogle = useCallback(async (): Promise<void> => {
+    await initiateGoogleLogin();
+    // リダイレクトが発生するため、この後の処理は /callback で行う
   }, []);
 
-  const handleRegister = useCallback(async (data: RegisterRequest): Promise<void> => {
-    await register(data);
-    // 登録後は自動でログインする
-    await handleLogin({ email: data.email, password: data.password });
-  }, [handleLogin]);
-
-  const handleLogout = useCallback(async (): Promise<void> => {
-    await apiLogout();
-    setState({ user: null, isLoading: false, isAuthenticated: false });
+  const handleLogout = useCallback((): void => {
+    cognitoLogout();
   }, []);
 
   const handleRefresh = useCallback(async (): Promise<boolean> => {
-    const refresh = localStorage.getItem("refresh_token");
-    if (!refresh) return false;
-    try {
-      await refreshToken(refresh);
-      return true;
-    } catch {
-      handleLogout();
+    const tokens = await refreshIdToken();
+    if (!tokens) {
+      clearTokens();
+      setState({ user: null, isLoading: false, isAuthenticated: false });
       return false;
     }
-  }, [handleLogout]);
+    return true;
+  }, []);
 
   return {
     ...state,
-    login: handleLogin,
-    register: handleRegister,
+    loginWithGoogle: handleLoginWithGoogle,
     logout: handleLogout,
     refresh: handleRefresh,
   };

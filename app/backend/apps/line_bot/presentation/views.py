@@ -109,17 +109,12 @@ class LineWebhookView(APIView):
             parser = WebhookParser(settings.LINE_CHANNEL_SECRET)
             events = parser.parse(body, signature)
         except InvalidSignatureError:
-            logger.warning("LINE Webhook: 署名検証に失敗しました。")
-            return Response(
-                {"error": "署名が無効です。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            # 署名エラーの詳細は攻撃者に知らせない（汎用エラーを返す）
+            logger.warning("LINE Webhook: 署名検証に失敗しました。ip=%s", request.META.get("REMOTE_ADDR"))
+            return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.exception("LINE Webhook: リクエストの解析に失敗しました。%s", e)
-            return Response(
-                {"error": "リクエストの解析に失敗しました。"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            logger.exception("LINE Webhook: リクエストの解析に失敗しました。error=%s", e)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
         for event in events:
             try:

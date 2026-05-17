@@ -4,6 +4,8 @@ is_staff=True のユーザーのみアクセス可能。
 """
 from __future__ import annotations
 
+import logging
+
 from django.db.models import Count, Q
 from django.utils import timezone
 from rest_framework.permissions import IsAdminUser
@@ -15,6 +17,16 @@ from apps.plans.infrastructure.models import PlanModel
 from apps.tasks.infrastructure.models import TaskModel
 from apps.users.infrastructure.models import UserModel
 
+audit_logger = logging.getLogger("audit")
+
+
+def _get_client_ip(request: Request) -> str:
+    """リクエスト元の IP アドレスを取得する。"""
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "unknown")
+
 
 class AdminStatsView(APIView):
     """サービス全体の集計統計を返す。"""
@@ -22,6 +34,11 @@ class AdminStatsView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request: Request) -> Response:
+        audit_logger.info(
+            "管理者 API アクセス: endpoint=admin/stats user=%s ip=%s",
+            getattr(request.user, "email", "unknown"),
+            _get_client_ip(request),
+        )
         now = timezone.now()
         # 当月初日 00:00:00 JST
         month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -62,6 +79,11 @@ class AdminUserListView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request: Request) -> Response:
+        audit_logger.info(
+            "管理者 API アクセス: endpoint=admin/users user=%s ip=%s",
+            getattr(request.user, "email", "unknown"),
+            _get_client_ip(request),
+        )
         users = (
             UserModel.objects.annotate(
                 plan_count=Count("plans", distinct=True),
