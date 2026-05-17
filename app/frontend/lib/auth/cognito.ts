@@ -195,9 +195,10 @@ export async function refreshIdToken(): Promise<CognitoTokens | null> {
 
 /**
  * リフレッシュトークンをサーバー側で失効させてからログアウトする。
+ * Cognito の /logout エンドポイントは使用せず、ローカルのトークンを削除してホームページへ遷移する。
  */
 export async function cognitoLogout(): Promise<void> {
-  const { domain, clientId, logoutUri } = getConfig();
+  const { domain, clientId } = getConfig();
   const refreshToken = getRefreshToken();
 
   // リフレッシュトークンを Cognito サーバー側で失効させる
@@ -217,11 +218,5 @@ export async function cognitoLogout(): Promise<void> {
   }
 
   clearTokens();
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    logout_uri: logoutUri,
-  });
-
-  window.location.href = `${domain}/logout?${params.toString()}`;
+  window.location.href = "/";
 }
