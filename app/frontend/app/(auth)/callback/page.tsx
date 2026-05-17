@@ -20,7 +20,8 @@ function CallbackHandler() {
     const returnedState = searchParams.get("state");
 
     if (errorParam) {
-      setError("認証がキャンセルされたか、エラーが発生しました。ログインをやり直してください。");
+      const errorDescription = searchParams.get("error_description") ?? "";
+      setError(`Cognito エラー: ${errorParam}${errorDescription ? ` / ${errorDescription}` : ""}`);
       return;
     }
 

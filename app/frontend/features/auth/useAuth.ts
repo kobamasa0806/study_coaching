@@ -47,14 +47,25 @@ export function useAuth(): UseAuthReturn {
         setState({ user, isLoading: false, isAuthenticated: true });
       })
       .catch(() => {
-        // id_token が期限切れの場合はリフレッシュを試みる
+        // id_token が期限切れの可能性があるためリフレッシュを試みる
         refreshIdToken()
           .then((tokens) => {
-            if (!tokens) throw new Error("リフレッシュ失敗");
-            return getMe();
-          })
-          .then((user) => {
-            setState({ user, isLoading: false, isAuthenticated: true });
+            if (!tokens) {
+              // リフレッシュトークンも無効 → Cognito セッションが完全に失効
+              clearTokens();
+              setState({ user: null, isLoading: false, isAuthenticated: false });
+              return;
+            }
+            // 新しいトークンでユーザー情報を再取得する
+            return getMe()
+              .then((user) => {
+                setState({ user, isLoading: false, isAuthenticated: true });
+              })
+              .catch(() => {
+                // バックエンドエラーの場合はトークンを保持する（Cognito セッションは有効）
+                // user は取得できないが Cookie は残してミドルウェアの認証を通す
+                setState({ user: null, isLoading: false, isAuthenticated: false });
+              });
           })
           .catch(() => {
             clearTokens();

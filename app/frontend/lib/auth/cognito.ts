@@ -116,7 +116,7 @@ export async function initiateLogin(): Promise<void> {
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: "openid email profile",
+    scope: "openid email",
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     state,
