@@ -4,6 +4,7 @@
 """
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from ..domain.models import User
@@ -17,6 +18,31 @@ class RegisterUserCommand:
     email: str
     username: str
     password: str
+
+
+class AbstractCognitoAdminService(ABC):
+    """Cognito 管理操作のポートインターフェース。infrastructure 層で実装する。"""
+
+    @abstractmethod
+    def create_coach(self, email: str) -> None: ...
+
+
+@dataclass
+class CreateCoachCommand:
+    """コーチ作成コマンド。"""
+
+    email: str
+
+
+class CreateCoachUseCase:
+    """コーチアカウント作成ユースケース。"""
+
+    def __init__(self, cognito_admin_service: AbstractCognitoAdminService) -> None:
+        self._cognito_admin_service = cognito_admin_service
+
+    def execute(self, command: CreateCoachCommand) -> None:
+        """コーチアカウントを Cognito に作成する。"""
+        self._cognito_admin_service.create_coach(email=command.email)
 
 
 class RegisterUserUseCase:

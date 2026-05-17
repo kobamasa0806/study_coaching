@@ -81,6 +81,7 @@ def _get_or_create_user(claims: dict[str, Any]) -> Any:
     """
     Cognito クレームからユーザーを取得または作成する。
     email を一意キーとして使用する。
+    cognito:groups に "coaches" が含まれる場合は is_staff=True を設定する（毎回同期）。
     """
     email: str = claims.get("email", "")
     cognito_sub: str = claims.get("sub", "")
@@ -99,11 +100,16 @@ def _get_or_create_user(claims: dict[str, Any]) -> Any:
     except DjangoValidationError:
         raise AuthenticationFailed("トークンに含まれるメールアドレスが無効です。")
 
+    # coaches グループへの所属を is_staff に反映する
+    groups: list[str] = claims.get("cognito:groups") or []
+    is_coach = "coaches" in groups
+
     user, created = User.objects.get_or_create(
         email=email,
         defaults={
             "username": name[:150],
             "is_active": True,
+            "is_staff": is_coach,
         },
     )
 
@@ -112,6 +118,10 @@ def _get_or_create_user(claims: dict[str, Any]) -> Any:
         # パスワード認証は使用しないため、使用不能なパスワードを設定する
         user.set_unusable_password()
         user.save(update_fields=["password"])
+    elif user.is_staff != is_coach:
+        # Cognito グループの変更を Django 側に同期する
+        user.is_staff = is_coach
+        user.save(update_fields=["is_staff"])
 
     return user
 

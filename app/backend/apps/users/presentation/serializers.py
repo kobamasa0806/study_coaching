@@ -25,6 +25,12 @@ class RegisterSerializer(serializers.Serializer):
         return value
 
 
+class CreateCoachSerializer(serializers.Serializer):
+    """コーチ作成リクエストのシリアライザー。"""
+
+    email = serializers.EmailField()
+
+
 class UserResponseSerializer(serializers.Serializer):
     """ユーザー情報レスポンスのシリアライザー。"""
 
