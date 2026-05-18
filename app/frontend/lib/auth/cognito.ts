@@ -120,6 +120,7 @@ export async function initiateLogin(): Promise<void> {
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     state,
+    lang: "ja",
   });
 
   window.location.href = `${domain}/oauth2/authorize?${params.toString()}`;
