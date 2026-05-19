@@ -10,22 +10,25 @@
 ## 技術スタック
 
 ### フロントエンド
-- **フレームワーク**: Next.js (App Router)
-- **UI ライブラリ**: React
+- **フレームワーク**: Next.js 15 (App Router)
+- **UI ライブラリ**: React 19
 - **スタイリング**: Tailwind CSS
-- **状態管理**: Zustand または React Query (TanStack Query)
-- **ガントチャート**: `react-google-charts` / `dhtmlx-gantt` / `frappe-gantt` など用途に応じて選定
-- **フォーム**: React Hook Form + Zod
-- **HTTP クライアント**: Axios または fetch (Next.js 標準)
-- **レスポンシブ**: モバイルファーストで設計。Tailwind のブレークポイント (`sm` / `md` / `lg`) を活用
+- **アイコン**: `lucide-react`
+- **日付操作**: `date-fns`
+- **ガントチャート**: カスタム実装（HTML テーブルベース。外部ライブラリ不使用）
+- **HTTP クライアント**: fetch（Next.js 標準）
+- **テスト**: Jest + React Testing Library
+- **レスポンシブ**: Tailwind のブレークポイント (`sm` / `md` / `lg`) を活用
 
 ### バックエンド
-- **フレームワーク**: Django + Django REST Framework (DRF)
-- **認証**: JWT 認証 (`djangorestframework-simplejwt`)
+- **フレームワーク**: Django 6 + Django REST Framework (DRF)
+- **認証**: AWS Cognito（Hosted UI + PKCE フロー）。バックエンドは Cognito id_token を検証するカスタム認証クラス (`CognitoJWTAuthentication`) を使用
 - **DB**: PostgreSQL
 - **ORM**: Django ORM
 - **バリデーション**: DRF Serializer
 - **CORS**: `django-cors-headers`
+- **環境変数管理**: `python-decouple`
+- **AWS 連携**: `boto3`（Cognito 管理操作）、`python-jose`（JWT 検証）
 
 ---
 
@@ -48,7 +51,7 @@ Infrastructure層 → Application層 / Domain層
 ### バックエンド構成（Django）
 
 ```
-backend/
+app/backend/
 ├── config/                  # Django 設定・ルーティング
 │   ├── settings/
 │   │   ├── base.py
@@ -57,11 +60,11 @@ backend/
 │   ├── urls.py
 │   └── wsgi.py
 ├── apps/
-│   ├── users/               # ユーザー・認証
+│   ├── users/               # ユーザー・Cognito 認証
 │   │   ├── domain/          # エンティティ・値オブジェクト・リポジトリIF
 │   │   ├── application/     # ユースケース
-│   │   ├── infrastructure/  # Django ORM 実装・外部連携
-│   │   └── presentation/    # DRF ViewSet・Serializer・URLs
+│   │   ├── infrastructure/  # Django ORM 実装・Cognito アダプター
+│   │   └── presentation/    # DRF APIView・Serializer・URLs
 │   ├── plans/               # 学習計画
 │   │   ├── domain/
 │   │   ├── application/
@@ -72,12 +75,15 @@ backend/
 │   │   ├── application/
 │   │   ├── infrastructure/
 │   │   └── presentation/
-│   └── sessions/            # 1on1 セッション管理
-│       ├── domain/
-│       ├── application/
-│       ├── infrastructure/
+│   ├── sessions/            # 1on1 セッション管理
+│   │   ├── domain/
+│   │   ├── application/
+│   │   ├── infrastructure/
+│   │   └── presentation/
+│   └── admin_panel/         # コーチ向け管理画面 API（統計・ユーザー一覧）
 │       └── presentation/
-└── shared/                  # 共通基底クラス・例外・ユーティリティ
+├── manage.py
+└── requirement.txt
 ```
 
 #### 各ディレクトリの責務
@@ -86,8 +92,8 @@ backend/
 |---|---|
 | `domain/` | エンティティ、値オブジェクト、リポジトリインターフェース（抽象クラス）。外部依存ゼロ |
 | `application/` | ユースケース。ドメインを orchestrate する。DI でリポジトリを受け取る |
-| `infrastructure/` | Django ORM を使ったリポジトリ実装、外部 API アダプター |
-| `presentation/` | DRF の ViewSet / APIView、Serializer、URL ルーティング |
+| `infrastructure/` | Django ORM を使ったリポジトリ実装、Cognito など外部 API アダプター |
+| `presentation/` | DRF の APIView、Serializer、URL ルーティング |
 
 **ルール:**
 - `domain/` は Django・DRF を一切 import しない
@@ -100,28 +106,24 @@ backend/
 ### フロントエンド構成（Next.js）
 
 ```
-frontend/
+app/frontend/
 ├── app/                     # App Router ページ
-│   ├── (auth)/              # 認証関連ページ
+│   ├── (auth)/              # 認証関連ページ（login・register・callback）
+│   ├── admin/               # コーチ向け管理ページ
+│   ├── components/          # ページ固有コンポーネント（Navbar, Hero 等）
 │   ├── dashboard/           # ダッシュボード
-│   ├── plans/               # 学習計画一覧・詳細
-│   ├── gantt/               # ガントチャート表示・編集
-│   └── sessions/            # 1on1 セッション
-├── components/
-│   ├── ui/                  # 汎用 UI コンポーネント（Button, Modal 等）
-│   ├── gantt/               # ガントチャート関連コンポーネント
-│   ├── plans/               # 学習計画コンポーネント
-│   └── sessions/            # セッションコンポーネント
-├── features/                # 機能単位のロジック（hooks, stores）
-│   ├── auth/
-│   ├── plans/
-│   ├── gantt/
-│   └── sessions/
+│   ├── plans/               # 学習計画一覧
+│   ├── sessions/            # 1on1 セッション
+│   └── study-plan/          # ガントチャート表示・編集
+│       └── components/      # GanttChart コンポーネント
+├── features/                # 機能単位のロジック（カスタム hooks）
+│   ├── auth/                # useAuth
+│   └── plans/               # usePlanGantt
 ├── lib/
-│   ├── api/                 # API クライアント・エンドポイント定義
-│   ├── types/               # TypeScript 型定義
-│   └── utils/               # 汎用ユーティリティ
-└── public/
+│   ├── api/                 # API クライアント・エンドポイント定義（client, auth, plans, tasks, sessions, admin）
+│   ├── auth/                # Cognito 認証ユーティリティ（PKCE, トークン管理）
+│   └── types/               # TypeScript 型定義（auth, plans, sessions, admin）
+└── middleware.ts             # ルート保護（Cookie の id_token を参照）
 ```
 
 **ルール:**
@@ -131,21 +133,43 @@ frontend/
 
 ---
 
+## 認証フロー
+
+### Cognito Hosted UI + PKCE
+
+```
+1. フロントエンド: initiateLogin() → PKCE + state 生成 → Cognito Hosted UI へリダイレクト
+2. Cognito Hosted UI: ユーザーがメール＋パスワードでログイン
+3. Cognito → /callback?code=...&state=... にリダイレクト
+4. フロントエンド: exchangeCodeForTokens() → id_token / refresh_token を Cookie に保存
+5. バックエンド: Authorization: Bearer <id_token> を CognitoJWTAuthentication で検証
+```
+
+- トークンは Cookie のみに保存（`SameSite=Strict`）。localStorage は使用しない
+- Next.js middleware が Cookie の `id_token` を参照してルートを保護する
+- バックエンドは Cognito JWKS を TTL 1時間でキャッシュして検証する
+- Cognito の `coaches` グループに属するユーザーは `is_staff=True` として同期される
+
+---
+
 ## API 設計
 
 RESTful API として設計します。ベース URL は `/api/v1/`。
 
-| リソース | エンドポイント例 | 説明 |
+| リソース | エンドポイント | 説明 |
 |---|---|---|
-| 認証 | `POST /api/v1/auth/token/` | JWT トークン取得 |
-| ユーザー | `GET /api/v1/users/me/` | 自分のプロフィール取得 |
+| ユーザー情報 | `GET /api/v1/auth/me/` | ログイン中ユーザーのプロフィール取得 |
+| コーチ作成 | `POST /api/v1/auth/coaches/` | コーチアカウント作成（`is_staff` のみ） |
 | 学習計画 | `GET/POST /api/v1/plans/` | 計画一覧・作成 |
 | タスク | `GET/POST /api/v1/plans/{id}/tasks/` | タスク一覧・作成 |
 | セッション | `GET/POST /api/v1/sessions/` | 1on1 セッション一覧・作成 |
+| 管理統計 | `GET /api/v1/admin/stats/` | サービス全体統計（`is_staff` のみ） |
+| 管理ユーザー | `GET /api/v1/admin/users/` | ユーザー一覧＋利用状況（`is_staff` のみ） |
 
+- Django 管理画面のパスは `DJANGO_ADMIN_URL` 環境変数でカスタマイズ可能（デフォルト: `admin/`）
 - レスポンスは常に JSON 形式
 - エラーレスポンスは `{ "error": { "code": "...", "message": "..." } }` の形式で統一
-- ページネーションは `limit` / `offset` を使用
+- レート制限: 未認証 20回/分、認証済み 100回/分
 
 ---
 
@@ -189,21 +213,19 @@ class CreateStudyPlanUseCase:
 ## 開発環境セットアップ
 
 ```bash
-# リポジトリクローン後
-
 # バックエンド
-cd backend
+cd app/backend
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements/development.txt
-cp .env.example .env
+pip install -r requirement.txt
+cp .env.example .env  # 環境変数を設定する
 python manage.py migrate
 python manage.py runserver
 
 # フロントエンド
-cd frontend
+cd app/frontend
 npm install
-cp .env.local.example .env.local
+cp .env.local.example .env.local  # 環境変数を設定する
 npm run dev
 ```
 
@@ -211,25 +233,39 @@ npm run dev
 
 ## 環境変数
 
-### バックエンド（`.env`）
+### バックエンド（`app/backend/.env`）
 ```
 SECRET_KEY=
 DEBUG=True
-DATABASE_URL=postgres://user:password@localhost:5432/study_coaching
 ALLOWED_HOSTS=localhost,127.0.0.1
+DB_NAME=study_coaching
+DB_USER=
+DB_PASSWORD=
+DB_HOST=localhost
+DB_PORT=5432
+DB_SSLMODE=prefer
+AWS_COGNITO_REGION=ap-northeast-1
+AWS_COGNITO_USER_POOL_ID=
+AWS_COGNITO_APP_CLIENT_ID=
+JWT_SIGNING_KEY=           # 省略時は SECRET_KEY を使用
 CORS_ALLOWED_ORIGINS=http://localhost:3000
+DJANGO_ADMIN_URL=admin/    # 本番環境では必ず変更する
 ```
 
-### フロントエンド（`.env.local`）
+### フロントエンド（`app/frontend/.env.local`）
 ```
 NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+NEXT_PUBLIC_COGNITO_DOMAIN=https://<your-domain>.auth.ap-northeast-1.amazoncognito.com
+NEXT_PUBLIC_COGNITO_CLIENT_ID=
+NEXT_PUBLIC_COGNITO_REDIRECT_URI=http://localhost:3000/callback
+NEXT_PUBLIC_COGNITO_LOGOUT_URI=http://localhost:3000
 ```
 
 ---
 
 ## テスト方針
 
-- バックエンド: `pytest` + `pytest-django` を使用
+- バックエンド: `pytest` + `pytest-django` を使用（設定は `pytest.ini`）
   - ユースケースの単体テストを必ず作成する
   - リポジトリはモックを使ってユースケースをテストする
 - フロントエンド: `Jest` + `React Testing Library` を使用
@@ -255,3 +291,4 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 - フロントエンドで `any` 型を使用しない
 - ハードコードされた認証情報・API キーをコードに含めない（必ず環境変数を使用する）
 - DB への直接アクセスを `infrastructure/` 層以外から行わない
+- Cognito トークンを localStorage に保存しない（必ず Cookie を使用する）
