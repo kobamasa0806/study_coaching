@@ -116,6 +116,10 @@ export default function GanttChart({
   const drag = useRef<DragState | null>(null)
   // テーブルラッパーへの参照（タッチイベントを passive: false で登録するために使用）
   const containerRef = useRef<HTMLDivElement>(null)
+  // 横スクロール可能な内部ラッパーへの参照
+  const scrollRef = useRef<HTMLDivElement>(null)
+  // 画面下部に固定した横スクロールバーへの参照
+  const fixedScrollRef = useRef<HTMLDivElement>(null)
   // タッチハンドラー内で最新値を参照するための ref（stale closure を回避）
   const itemsRef = useRef(items)
   const onToggleDatesRef = useRef(onToggleDates)
@@ -263,6 +267,46 @@ export default function GanttChart({
     return () => window.removeEventListener('mouseup', stop)
   }, [])
 
+  // メインスクロールエリアと固定スクロールバーのスクロール位置を双方向に同期する
+  useEffect(() => {
+    const main = scrollRef.current
+    const fixed = fixedScrollRef.current
+    if (!main || !fixed) return
+
+    const onMain = () => { fixed.scrollLeft = main.scrollLeft }
+    const onFixed = () => { main.scrollLeft = fixed.scrollLeft }
+
+    main.addEventListener('scroll', onMain, { passive: true })
+    fixed.addEventListener('scroll', onFixed, { passive: true })
+    return () => {
+      main.removeEventListener('scroll', onMain)
+      fixed.removeEventListener('scroll', onFixed)
+    }
+  }, [])
+
+  // コンテナのサイズ変化に応じて固定スクロールバーの位置・幅を更新する
+  useEffect(() => {
+    const container = containerRef.current
+    const fixedBar = fixedScrollRef.current
+    if (!container || !fixedBar) return
+
+    function updateBarPosition() {
+      if (!container || !fixedBar) return
+      const r = container.getBoundingClientRect()
+      fixedBar.style.left = `${r.left}px`
+      fixedBar.style.width = `${r.width}px`
+    }
+    updateBarPosition()
+
+    const ro = new ResizeObserver(updateBarPosition)
+    ro.observe(container)
+    window.addEventListener('resize', updateBarPosition)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', updateBarPosition)
+    }
+  }, [])
+
   // タッチによるドラッグ操作を登録する。
   // React はタッチイベントを passive として登録するため、preventDefault() が効かない。
   // そのため useEffect で直接 addEventListener し、{ passive: false } を指定する。
@@ -363,13 +407,14 @@ export default function GanttChart({
   // ---- レンダリング ----
 
   return (
+    <>
     <div
       ref={containerRef}
       className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden select-none"
       onMouseDown={handleMouseDown}
       onMouseOver={handleMouseOver}
     >
-      <div className="overflow-x-auto">
+      <div ref={scrollRef} className="overflow-x-auto">
         <table
           className="border-collapse"
           style={{ minWidth: `${tableMinWidth}px` }}
@@ -696,5 +741,16 @@ export default function GanttChart({
         </table>
       </div>
     </div>
+
+    {/* 画面下部に固定した横スクロールバー（テーブルが画面幅を超えるときにスクロールしやすくする） */}
+    <div
+      ref={fixedScrollRef}
+      data-testid="fixed-scrollbar"
+      className="fixed bottom-0 z-50 overflow-x-auto"
+      style={{ height: 16 }}
+    >
+      <div style={{ width: tableMinWidth, height: 1 }} />
+    </div>
+    </>
   )
 }
