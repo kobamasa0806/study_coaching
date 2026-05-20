@@ -6,8 +6,9 @@ import { usePathname } from 'next/navigation'
 import { Flower2, Menu, X } from 'lucide-react'
 
 const navLinks = [
-  { label: 'サービス', href: '#features' },
-  { label: '使い方', href: '#how-it-works' },
+  { label: 'サービス', href: '/#features' },
+  { label: '使い方', href: '/#how-it-works' },
+  { label: 'ガントチャートの使い方', href: '/gantt-guide' },
   { label: '学習計画', href: '/study-plan' },
 ]
 

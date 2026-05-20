@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { BookOpen, CalendarDays, MessageSquare, ArrowRight } from "lucide-react";
+import { BookOpen, CalendarDays, MessageSquare, ArrowRight, HelpCircle } from "lucide-react";
 import DashboardHeader from "../components/DashboardHeader";
 
 export default function DashboardPage() {
@@ -58,6 +58,20 @@ export default function DashboardPage() {
             </div>
             <h2 className="font-semibold text-gray-900 mb-1">1on1 セッション</h2>
             <p className="text-sm text-gray-500">コーチとのセッション記録を見る</p>
+          </Link>
+
+          <Link
+            href="/gantt-guide"
+            className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow group"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center">
+                <HelpCircle className="w-5 h-5 text-amber-600" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-amber-600 transition-colors" />
+            </div>
+            <h2 className="font-semibold text-gray-900 mb-1">ガントチャート 使い方</h2>
+            <p className="text-sm text-gray-500">ガントチャートの操作方法を確認する</p>
           </Link>
         </div>
       </div>

@@ -47,7 +47,7 @@ export default function Hero() {
 
             <p className="text-gray-600 text-lg leading-relaxed mb-8 max-w-md">
               社会人の資格取得は時間との戦い。
-              WBSとガントチャートで計画と実績を管理し、
+              ガントチャートで計画と実績を管理し、
               マネージャーと伴走することで確実に合格へ近づきます。
             </p>
 
