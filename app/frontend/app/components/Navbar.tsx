@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Flower2, Menu, X } from 'lucide-react'
+import { useAuth } from '@/features/auth/useAuth'
 
 const navLinks = [
   { label: 'サービス', href: '/#features' },
@@ -15,6 +16,59 @@ const navLinks = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const pathname = usePathname()
+  const { isAuthenticated, isLoading, logout } = useAuth()
+
+  const handleLogout = async () => {
+    setMenuOpen(false)
+    await logout()
+  }
+
+  /** 認証状態に応じた右上ボタンを返す */
+  const renderAuthButton = (mobile = false) => {
+    if (isLoading) return null
+
+    if (isAuthenticated) {
+      return (
+        <button
+          onClick={handleLogout}
+          className={
+            mobile
+              ? 'text-center text-sm font-medium text-gray-600 py-2'
+              : 'text-sm font-medium text-gray-600 hover:text-rose-500 transition-colors'
+          }
+        >
+          ログアウト
+        </button>
+      )
+    }
+
+    return (
+      <>
+        <Link
+          href="/login"
+          onClick={() => setMenuOpen(false)}
+          className={
+            mobile
+              ? 'text-center text-sm font-medium text-gray-600 py-2'
+              : 'text-sm font-medium text-gray-600 hover:text-rose-500 transition-colors'
+          }
+        >
+          ログイン
+        </Link>
+        <Link
+          href="/register"
+          onClick={() => setMenuOpen(false)}
+          className={
+            mobile
+              ? 'text-center bg-rose-400 text-white text-sm font-semibold px-4 py-2 rounded-lg'
+              : 'bg-rose-400 hover:bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors'
+          }
+        >
+          新規登録
+        </Link>
+      </>
+    )
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-rose-100 shadow-sm">
@@ -48,18 +102,7 @@ export default function Navbar() {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-600 hover:text-rose-500 transition-colors"
-            >
-              ログイン
-            </Link>
-            <Link
-              href="/register"
-              className="bg-rose-400 hover:bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
-            >
-              無料で始める
-            </Link>
+            {renderAuthButton()}
           </div>
 
           {/* Mobile Menu Button */}
@@ -87,16 +130,7 @@ export default function Navbar() {
             </Link>
           ))}
           <div className="pt-2 flex flex-col gap-2">
-            <Link href="/login" className="text-center text-sm font-medium text-gray-600 py-2" onClick={() => setMenuOpen(false)}>
-              ログイン
-            </Link>
-            <Link
-              href="/register"
-              onClick={() => setMenuOpen(false)}
-              className="text-center bg-rose-400 text-white text-sm font-semibold px-4 py-2 rounded-lg"
-            >
-              無料で始める
-            </Link>
+            {renderAuthButton(true)}
           </div>
         </div>
       )}
