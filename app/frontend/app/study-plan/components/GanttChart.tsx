@@ -114,18 +114,40 @@ export default function GanttChart({
 }: Props) {
   // ドラッグ状態（ref で管理して再レンダリングを避ける）
   const drag = useRef<DragState | null>(null)
+  // テーブルラッパーへの参照（タッチイベントを passive: false で登録するために使用）
+  const containerRef = useRef<HTMLDivElement>(null)
+  // タッチハンドラー内で最新値を参照するための ref（stale closure を回避）
+  const itemsRef = useRef(items)
+  const onToggleDatesRef = useRef(onToggleDates)
+  const allDateStrsRef = useRef<string[]>([])
   // 編集中の項目ID
   const [editingId, setEditingId] = useState<string | null>(null)
   // 編集中のテキスト
   const [editValue, setEditValue] = useState('')
   // 折りたたまれた月のキーセット
   const [collapsedMonths, setCollapsedMonths] = useState<Set<string>>(new Set())
+  // スマートフォン幅（< 640px）かどうか
+  const [isMobile, setIsMobile] = useState(false)
 
   // 月・年のグループ情報を計算
   const monthInfos = buildMonthInfos(dates)
   const yearGroups = buildYearGroups(monthInfos)
   // 表示範囲の全日付を文字列配列で保持
   const allDateStrs = dates.map(toDateStr)
+
+  // タッチハンドラーが常に最新値を参照できるよう ref に同期する
+  useEffect(() => { itemsRef.current = items }, [items])
+  useEffect(() => { onToggleDatesRef.current = onToggleDates }, [onToggleDates])
+  useEffect(() => { allDateStrsRef.current = allDateStrs })
+
+  // ウィンドウ幅に応じて isMobile を更新する
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   /** 指定した月が折りたたまれているかどうかを返す */
   function isCollapsed(key: string) {
@@ -153,9 +175,13 @@ export default function GanttChart({
     return year.months.reduce((sum, m) => sum + visibleCols(m), 0)
   }
 
+  // モバイルとデスクトップで切り替えるサイズ値
+  const nameColWidth = isMobile ? 140 : NAME_COL_WIDTH  // 項目名列幅
+  const cellHeight = isMobile ? 32 : 22                  // 日付セルの高さ
+
   // テーブルの最小幅（スクロール用）
   const tableMinWidth =
-    NAME_COL_WIDTH +
+    nameColWidth +
     monthInfos.reduce((sum, m) => sum + visibleCols(m) * CELL_WIDTH, 0)
 
   // ---- ドラッグ操作 ----
@@ -237,6 +263,87 @@ export default function GanttChart({
     return () => window.removeEventListener('mouseup', stop)
   }, [])
 
+  // タッチによるドラッグ操作を登録する。
+  // React はタッチイベントを passive として登録するため、preventDefault() が効かない。
+  // そのため useEffect で直接 addEventListener し、{ passive: false } を指定する。
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+
+    /** ref 経由で allDateStrs にアクセスし、from〜to 間の日付配列を返す */
+    function getDatesBetweenFromRef(from: string, to: string): string[] {
+      const dateStrs = allDateStrsRef.current
+      const a = dateStrs.indexOf(from)
+      const b = dateStrs.indexOf(to)
+      if (a === -1 || b === -1) return []
+      const [lo, hi] = a <= b ? [a, b] : [b, a]
+      return dateStrs.slice(lo, hi + 1)
+    }
+
+    /** タッチ開始：セルに触れた瞬間にドラッグを開始する */
+    function handleTouchStart(e: TouchEvent) {
+      const touch = e.touches[0]
+      const target = document.elementFromPoint(touch.clientX, touch.clientY)
+      const info = getCellInfo(target as Element)
+      if (!info) return  // セル以外では通常のスクロールを許可する
+      e.preventDefault() // セル上のタッチではスクロールを抑止してドラッグを優先する
+
+      const item = itemsRef.current.find(i => i.id === info.itemId)
+      if (!item) return
+      const arr = info.rowType === 'plan' ? item.planDates : item.actualDates
+      const fill = !arr.includes(info.dateStr)
+
+      drag.current = {
+        itemId: info.itemId,
+        rowType: info.rowType,
+        fill,
+        startDate: info.dateStr,
+        lastDate: info.dateStr,
+      }
+      onToggleDatesRef.current(info.itemId, info.rowType, [info.dateStr], fill)
+    }
+
+    /** タッチ移動：指が動くたびに elementFromPoint でセルを特定してドラッグを継続する */
+    function handleTouchMove(e: TouchEvent) {
+      if (!drag.current) return
+      e.preventDefault() // ドラッグ中はスクロールを抑止する
+
+      const touch = e.touches[0]
+      const target = document.elementFromPoint(touch.clientX, touch.clientY)
+      const info = getCellInfo(target as Element)
+      if (!info) return
+      if (info.itemId !== drag.current.itemId || info.rowType !== drag.current.rowType) return
+      if (info.dateStr === drag.current.lastDate) return
+
+      const prevSet = new Set(getDatesBetweenFromRef(drag.current.startDate, drag.current.lastDate))
+      const nextSet = new Set(getDatesBetweenFromRef(drag.current.startDate, info.dateStr))
+
+      const toApply = [...nextSet].filter(d => !prevSet.has(d))
+      const toUndo = [...prevSet].filter(d => !nextSet.has(d))
+
+      if (toApply.length) onToggleDatesRef.current(info.itemId, info.rowType, toApply, drag.current.fill)
+      if (toUndo.length) onToggleDatesRef.current(info.itemId, info.rowType, toUndo, !drag.current.fill)
+      drag.current.lastDate = info.dateStr
+    }
+
+    /** タッチ終了・キャンセル：ドラッグを終了する */
+    function handleTouchEnd() {
+      drag.current = null
+    }
+
+    el.addEventListener('touchstart', handleTouchStart, { passive: false })
+    el.addEventListener('touchmove', handleTouchMove, { passive: false })
+    el.addEventListener('touchend', handleTouchEnd)
+    el.addEventListener('touchcancel', handleTouchEnd)
+
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart)
+      el.removeEventListener('touchmove', handleTouchMove)
+      el.removeEventListener('touchend', handleTouchEnd)
+      el.removeEventListener('touchcancel', handleTouchEnd)
+    }
+  }, []) // マウント時のみ登録。最新値は ref 経由で参照するため依存配列は空
+
   // ---- 項目名編集 ----
 
   /** 項目名の編集を開始する */
@@ -257,6 +364,7 @@ export default function GanttChart({
 
   return (
     <div
+      ref={containerRef}
       className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden select-none"
       onMouseDown={handleMouseDown}
       onMouseOver={handleMouseOver}
@@ -277,7 +385,7 @@ export default function GanttChart({
               */}
               <th
                 className="sticky left-0 z-20 bg-gray-50 border-b border-r border-gray-200 align-middle"
-                style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
+                style={{ width: nameColWidth, minWidth: nameColWidth }}
                 rowSpan={4}
               >
                 <span className="block px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider text-left">
@@ -429,7 +537,7 @@ export default function GanttChart({
                       <td
                         className="sticky left-0 z-10 bg-white border-r border-gray-200 p-0"
                         rowSpan={2}
-                        style={{ width: NAME_COL_WIDTH, minWidth: NAME_COL_WIDTH }}
+                        style={{ width: nameColWidth, minWidth: nameColWidth }}
                       >
                         {/* 項目名エリア（クリックで編集モードに切り替わる） */}
                         <div className="flex items-center gap-1 px-3 py-1.5 min-h-[32px]">
@@ -464,7 +572,7 @@ export default function GanttChart({
                                 {item.name}
                               </span>
                               <div
-                                className="flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                className="flex-shrink-0 flex items-center gap-0.5 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/item:opacity-100 transition-opacity"
                                 onMouseDown={e => e.stopPropagation()}
                               >
                                 {/* 編集ボタン */}
@@ -487,7 +595,7 @@ export default function GanttChart({
                         </div>
 
                         {/* 「計画」「実績」のラベル（項目名セルの下半分） */}
-                        <div className="flex border-t border-gray-100" style={{ height: 44 }}>
+                        <div className="flex border-t border-gray-100" style={{ height: cellHeight * 2 }}>
                           <div className="flex-1 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-semibold border-r border-gray-100 tracking-wide">
                             計画
                           </div>
@@ -504,7 +612,7 @@ export default function GanttChart({
                           return [(
                             <td
                               key={`${item.id}-${m.key}-plan`}
-                              style={{ width: COLLAPSED_CELL_WIDTH, height: 22 }}
+                              style={{ width: COLLAPSED_CELL_WIDTH, height: cellHeight }}
                               className="border-r border-gray-200 bg-gray-50"
                             />
                           )]
@@ -522,7 +630,7 @@ export default function GanttChart({
                               data-item-id={item.id}
                               data-row-type="plan"
                               data-date={dateStr}
-                              style={{ height: 22, cursor: 'crosshair' }}
+                              style={{ height: cellHeight, cursor: 'crosshair' }}
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
                                   ? 'bg-indigo-500'                      // 計画あり: 青
@@ -547,7 +655,7 @@ export default function GanttChart({
                           return [(
                             <td
                               key={`${item.id}-${m.key}-actual`}
-                              style={{ width: COLLAPSED_CELL_WIDTH, height: 22 }}
+                              style={{ width: COLLAPSED_CELL_WIDTH, height: cellHeight }}
                               className="border-r border-gray-200 bg-gray-50"
                             />
                           )]
@@ -564,7 +672,7 @@ export default function GanttChart({
                               data-item-id={item.id}
                               data-row-type="actual"
                               data-date={dateStr}
-                              style={{ height: 22, cursor: 'crosshair' }}
+                              style={{ height: cellHeight, cursor: 'crosshair' }}
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
                                   ? 'bg-emerald-500'                       // 実績あり: 緑
