@@ -97,22 +97,16 @@ export function getRefreshToken(): string | null {
 
 // ---- OAuth フロー ----
 
-/**
- * Cognito Hosted UI へのログインフローを開始する。
- * PKCE の code_verifier と CSRF 対策の state を sessionStorage に保存してリダイレクトする。
- * Cognito Hosted UI 上でユーザーがメールアドレス＋パスワードを入力する。
- */
-export async function initiateLogin(): Promise<void> {
-  const { domain, clientId, redirectUri } = getConfig();
+/** PKCE + state を生成して sessionStorage に保存し、URLSearchParams を返す共通処理 */
+async function buildPkceParams(clientId: string, redirectUri: string): Promise<URLSearchParams> {
   const codeVerifier = generateRandomString(64);
   const codeChallenge = base64urlEncode(await sha256(codeVerifier));
-  // CSRF 対策: state パラメータで callback の正当性を検証する
   const state = generateRandomString(32);
 
   sessionStorage.setItem("pkce_code_verifier", codeVerifier);
   sessionStorage.setItem("pkce_state", state);
 
-  const params = new URLSearchParams({
+  return new URLSearchParams({
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -122,8 +116,27 @@ export async function initiateLogin(): Promise<void> {
     state,
     lang: "ja",
   });
+}
 
+/**
+ * Cognito Hosted UI へのログインフローを開始する。
+ * PKCE の code_verifier と CSRF 対策の state を sessionStorage に保存してリダイレクトする。
+ * Cognito Hosted UI 上でユーザーがメールアドレス＋パスワードを入力する。
+ */
+export async function initiateLogin(): Promise<void> {
+  const { domain, clientId, redirectUri } = getConfig();
+  const params = await buildPkceParams(clientId, redirectUri);
   window.location.href = `${domain}/oauth2/authorize?${params.toString()}`;
+}
+
+/**
+ * Cognito Hosted UI のサインアップページへ遷移する。
+ * 登録完了後は通常の認証フロー（/callback）に合流する。
+ */
+export async function initiateSignUp(): Promise<void> {
+  const { domain, clientId, redirectUri } = getConfig();
+  const params = await buildPkceParams(clientId, redirectUri);
+  window.location.href = `${domain}/signup?${params.toString()}`;
 }
 
 /**
