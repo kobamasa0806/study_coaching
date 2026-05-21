@@ -1,6 +1,4 @@
 __pycache__/
-app/backend/.env
-app/frotntend/.env
 .env/
 .venv/
 service_account.json
