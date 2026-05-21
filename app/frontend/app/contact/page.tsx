@@ -1,24 +1,40 @@
 'use client'
 
 import { useState } from 'react'
-import { Send, CheckCircle } from 'lucide-react'
+import { Send, CheckCircle, AlertCircle } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
-export default function ContactPage() {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
-  const [submitted, setSubmitted] = useState(false)
+type FormState = { name: string; email: string; subject: string; message: string }
+type Status = 'idle' | 'loading' | 'success' | 'error'
 
-  const handleSubmit = (e: React.FormEvent) => {
+export default function ContactPage() {
+  const [form, setForm] = useState<FormState>({ name: '', email: '', subject: '', message: '' })
+  const [status, setStatus] = useState<Status>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const mailtoUrl =
-      `mailto:kobamasahighhigh@gmail.com` +
-      `?subject=${encodeURIComponent(`[ケンサン お問い合わせ] ${form.subject}`)}` +
-      `&body=${encodeURIComponent(
-        `お名前: ${form.name}\nメールアドレス: ${form.email}\n\n${form.message}`
-      )}`
-    window.location.href = mailtoUrl
-    setSubmitted(true)
+    setStatus('loading')
+    setErrorMessage('')
+
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/contact/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data?.error?.message ?? 'エラーが発生しました。')
+      }
+
+      setStatus('success')
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'エラーが発生しました。')
+      setStatus('error')
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -34,18 +50,18 @@ export default function ContactPage() {
           ご質問・ご要望はこちらからお気軽にお送りください。
         </p>
 
-        {submitted ? (
+        {status === 'success' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
             <CheckCircle className="w-12 h-12 text-rose-400" />
-            <p className="text-lg font-semibold text-white">メールアプリが開きました</p>
+            <p className="text-lg font-semibold text-white">お問い合わせを受け付けました</p>
             <p className="text-sm text-gray-500">
-              送信内容をご確認の上、メールを送信してください。
+              内容を確認の上、ご連絡いたします。しばらくお待ちください。
             </p>
             <button
-              onClick={() => setSubmitted(false)}
+              onClick={() => { setStatus('idle'); setForm({ name: '', email: '', subject: '', message: '' }) }}
               className="mt-4 text-sm text-rose-400 hover:text-rose-300 underline"
             >
-              フォームに戻る
+              別のお問い合わせをする
             </button>
           </div>
         ) : (
@@ -114,17 +130,21 @@ export default function ContactPage() {
               />
             </div>
 
+            {status === 'error' && (
+              <div className="flex items-start gap-2 text-red-400 text-sm bg-red-950 border border-red-800 rounded-lg px-4 py-3">
+                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors"
+              disabled={status === 'loading'}
+              className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors"
             >
               <Send className="w-4 h-4" />
-              送信する
+              {status === 'loading' ? '送信中...' : '送信する'}
             </button>
-
-            <p className="text-xs text-gray-600">
-              送信ボタンを押すと、メールアプリが開きます。内容をご確認の上、メールを送信してください。
-            </p>
           </form>
         )}
       </main>
