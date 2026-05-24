@@ -7,7 +7,8 @@
  * - 項目の追加・削除、日付セルのクリック/ドラッグで計画・実績を記録できる
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { addDays, addMonths, differenceInDays, endOfMonth, startOfMonth, startOfWeek, format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Plus, ChevronLeft, ChevronRight, CalendarDays, CalendarPlus } from 'lucide-react'
@@ -35,7 +36,10 @@ function getDisplayDates(start: Date, days: number): Date[] {
   return Array.from({ length: days }, (_, i) => addDays(start, i))
 }
 
-export default function StudyPlanPage() {
+function StudyPlanContent() {
+  const searchParams = useSearchParams()
+  const planIdParam = searchParams.get('planId')
+
   // 表示開始日（デフォルトは今週の月曜日）
   const [viewStart, setViewStart] = useState<Date>(new Date())
   // 表示する総日数
@@ -44,7 +48,9 @@ export default function StudyPlanPage() {
   const [mounted, setMounted] = useState(false)
 
   // ガントチャート用データと操作関数を hook から取得
-  const { items, isLoading, addItem, removeItem, updateItemName, toggleDates } = usePlanGantt()
+  const { items, isLoading, addItem, removeItem, updateItemName, toggleDates } = usePlanGantt({
+    initialPlanId: planIdParam,
+  })
 
   useEffect(() => {
     // クライアントサイドで今週の月曜日を設定する
@@ -176,5 +182,13 @@ export default function StudyPlanPage() {
         </div>
       </div>
     </>
+  )
+}
+
+export default function StudyPlanPage() {
+  return (
+    <Suspense>
+      <StudyPlanContent />
+    </Suspense>
   )
 }

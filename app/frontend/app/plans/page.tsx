@@ -203,7 +203,7 @@ export default function PlansPage() {
                       削除
                     </button>
                     <Link
-                      href="/study-plan"
+                      href={`/study-plan?planId=${plan.id}`}
                       className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
                     >
                       ガントチャート

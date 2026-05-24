@@ -7,7 +7,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPlan, getPlans } from "@/lib/api/plans";
+import { createPlan, getPlan, getPlans } from "@/lib/api/plans";
 import { createTask, deleteTask, getTasks, updateTask } from "@/lib/api/tasks";
 import type { Plan, Task } from "@/lib/types/plans";
 import type { GanttItem } from "@/app/study-plan/page";
@@ -37,10 +37,15 @@ type UsePlanGanttReturn = {
   ) => void;
 };
 
+type UsePlanGanttOptions = {
+  /** URL クエリパラメータで指定されたプラン ID。未指定時は最初のプランを使う */
+  initialPlanId?: string | null;
+};
+
 /** デバウンス保存のウェイト時間（ms） */
 const SAVE_DEBOUNCE_MS = 800;
 
-export function usePlanGantt(): UsePlanGanttReturn {
+export function usePlanGantt({ initialPlanId }: UsePlanGanttOptions = {}): UsePlanGanttReturn {
   const [items, setItems] = useState<GanttItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [planId, setPlanId] = useState<string | null>(null);
@@ -59,24 +64,32 @@ export function usePlanGantt(): UsePlanGanttReturn {
 
     (async () => {
       try {
-        let plans = await getPlans();
-        if (ignore) return;
+        let plan: Plan;
 
-        // 計画がなければデフォルト計画を作成する
-        if (plans.length === 0) {
-          const today = new Date();
-          const targetDate = new Date(today);
-          targetDate.setMonth(targetDate.getMonth() + 3);
-          const newPlan = await createPlan({
-            title: "学習計画",
-            description: "",
-            target_date: targetDate.toISOString().slice(0, 10),
-          });
+        if (initialPlanId) {
+          // URL で指定されたプランを直接取得する
+          plan = await getPlan(initialPlanId);
           if (ignore) return;
-          plans = [newPlan];
-        }
+        } else {
+          // 指定なしの場合は一覧の先頭プランを使う（なければ自動作成）
+          let plans = await getPlans();
+          if (ignore) return;
 
-        const plan: Plan = plans[0];
+          if (plans.length === 0) {
+            const today = new Date();
+            const targetDate = new Date(today);
+            targetDate.setMonth(targetDate.getMonth() + 3);
+            const newPlan = await createPlan({
+              title: "学習計画",
+              description: "",
+              target_date: targetDate.toISOString().slice(0, 10),
+            });
+            if (ignore) return;
+            plans = [newPlan];
+          }
+
+          plan = plans[0];
+        }
         setPlanId(plan.id);
 
         const tasks = await getTasks(plan.id);
