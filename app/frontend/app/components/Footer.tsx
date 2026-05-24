@@ -3,7 +3,7 @@ import { Flower2 } from 'lucide-react'
 
 const footerLinks: Record<string, { label: string; href: string }[]> = {
   開発者情報: [
-    { label: '開発者の紹介', href: '#' },
+    { label: '開発者の紹介', href: '/developer' },
     { label: 'プライバシーポリシー', href: '/privacy-policy' },
     { label: '利用規約', href: '/terms' },
     { label: 'お問い合わせ', href: '/contact' },
