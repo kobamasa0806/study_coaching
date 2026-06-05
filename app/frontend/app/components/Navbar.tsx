@@ -10,7 +10,7 @@ const navLinks = [
   { label: 'サービス', href: '/#features' },
   { label: '使い方', href: '/#how-it-works' },
   { label: 'ガントチャートの使い方', href: '/gantt-guide' },
-  { label: '学習計画', href: '/study-plan' },
+  { label: '学習計画', href: '/plans' },
 ]
 
 export default function Navbar() {

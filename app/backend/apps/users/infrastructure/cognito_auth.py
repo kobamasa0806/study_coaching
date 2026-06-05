@@ -69,6 +69,11 @@ def _verify_token(id_token: str) -> dict[str, Any]:
             algorithms=["RS256"],
             audience=client_id,
             issuer=issuer,
+            # Cognito の id_token には at_hash クレームが含まれる。
+            # python-jose は at_hash があると access_token との照合を要求するが、
+            # ここでは id_token のみを検証するため at_hash 検証を無効化する。
+            # （署名・aud・iss・exp は引き続き検証される）
+            options={"verify_at_hash": False},
         )
         return claims
     except ExpiredSignatureError as e:

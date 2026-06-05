@@ -51,10 +51,11 @@ export default function PlansPage() {
     setIsCreating(true);
     try {
       const created = await createPlan(form);
-      // 作成したプランを一覧の先頭に追加する
       setPlans((prev) => [created, ...prev]);
       setForm({ title: "", description: "", target_date: "" });
       setShowForm(false);
+      // 作成完了後はそのプランのガントチャートへ遷移する
+      window.location.href = `/study-plan?planId=${created.id}`;
     } catch {
       setError("プランの作成に失敗しました。");
     } finally {

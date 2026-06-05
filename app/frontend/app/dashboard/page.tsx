@@ -19,7 +19,7 @@ export default function DashboardPage() {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link
-            href="/study-plan"
+            href="/plans"
             className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow group"
           >
             <div className="flex items-center justify-between mb-4">
