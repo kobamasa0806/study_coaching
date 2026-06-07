@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Outer frame -->
+  <rect x="24" y="24" width="464" height="464" rx="64"
+        fill="#ffffff" stroke="#1f2937" stroke-width="16"/>
+
+  <!-- Simplified gantt axis -->
+  <line x1="120" y1="120" x2="120" y2="380"
+        stroke="#1f2937" stroke-width="14" stroke-linecap="round"/>
+  <line x1="120" y1="150" x2="400" y2="150"
+        stroke="#1f2937" stroke-width="14" stroke-linecap="round"/>
+
+  <!-- Task bars -->
+  <rect x="140" y="185" width="130" height="42" rx="10" fill="#1e88ff"/>
+  <rect x="175" y="255" width="190" height="42" rx="10" fill="#43d047"/>
+  <rect x="230" y="325" width="170" height="42" rx="10" fill="#ff7a00"/>
+</svg>
