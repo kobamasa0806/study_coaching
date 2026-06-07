@@ -1,6 +1,18 @@
 import { Flag, GanttChart, Users } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-const steps = [
+type Step = {
+  step: string
+  icon: LucideIcon
+  title: string
+  description: string
+  color: string
+  lineColor: string
+  // 準備中（未提供）のステップは true にするとグレーアウト表示になる
+  comingSoon?: boolean
+}
+
+const steps: Step[] = [
   {
     step: '01',
     icon: Flag,
@@ -27,6 +39,7 @@ const steps = [
       '定期的な1on1でマネージャーが学習データを確認しフィードバック。遅延リスクを早期に察知し、計画を柔軟に修正しながら合格まで伴走します。',
     color: 'text-green-600 bg-green-50',
     lineColor: 'border-green-200',
+    comingSoon: true,
   },
 ]
 
@@ -57,11 +70,20 @@ export default function HowItWorks() {
             {steps.map((step, index) => {
               const Icon = step.icon
               return (
-                <div key={step.step} className="relative flex flex-col items-center text-center group">
+                <div
+                  key={step.step}
+                  className={`relative flex flex-col items-center text-center group ${
+                    step.comingSoon ? 'opacity-60' : ''
+                  }`}
+                >
                   {/* Step number + icon */}
                   <div className="relative mb-6">
                     <div
-                      className={`w-16 h-16 rounded-2xl flex items-center justify-center ${step.color} shadow-sm group-hover:scale-110 transition-transform`}
+                      className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm transition-transform ${
+                        step.comingSoon
+                          ? 'bg-gray-100 text-gray-400'
+                          : `${step.color} group-hover:scale-110`
+                      }`}
                     >
                       <Icon className="w-8 h-8" />
                     </div>
@@ -71,6 +93,11 @@ export default function HowItWorks() {
                   </div>
 
                   <h3 className="text-gray-900 font-bold text-xl mb-3">{step.title}</h3>
+                  {step.comingSoon && (
+                    <span className="inline-block mb-3 text-xs font-semibold px-2.5 py-1 rounded-full bg-gray-200 text-gray-500">
+                      準備中
+                    </span>
+                  )}
                   <p className="text-gray-500 text-sm leading-relaxed max-w-xs">{step.description}</p>
                 </div>
               )

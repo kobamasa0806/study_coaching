@@ -46,19 +46,22 @@ export default function DashboardPage() {
             <p className="text-sm text-gray-500">作成したプランを確認・編集する</p>
           </Link>
 
-          <Link
-            href="/sessions"
-            className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow group"
+          {/* 1on1 セッションは準備中のためグレーアウト・非活性表示 */}
+          <div
+            aria-disabled="true"
+            className="bg-white rounded-2xl border border-gray-200 p-6 opacity-60 grayscale cursor-not-allowed select-none"
           >
             <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center">
-                <MessageSquare className="w-5 h-5 text-violet-600" />
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-5 h-5 text-gray-400" />
               </div>
-              <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-violet-600 transition-colors" />
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-500">
+                準備中
+              </span>
             </div>
             <h2 className="font-semibold text-gray-900 mb-1">1on1 セッション</h2>
             <p className="text-sm text-gray-500">コーチとのセッション記録を見る</p>
-          </Link>
+          </div>
 
           <Link
             href="/gantt-guide"

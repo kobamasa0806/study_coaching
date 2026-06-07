@@ -1,6 +1,18 @@
 import { BarChart3, CalendarDays, MessageCircle, PenLine } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
-const features = [
+type Feature = {
+  icon: LucideIcon
+  color: string
+  title: string
+  description: string
+  badge: string
+  badgeColor: string
+  // 準備中（未提供）の機能は true にするとグレーアウト表示になる
+  comingSoon?: boolean
+}
+
+const features: Feature[] = [
   {
     icon: CalendarDays,
     color: 'bg-sky-100 text-sky-600',
@@ -36,6 +48,7 @@ const features = [
       'プロのマネージャーが学習データをもとに定期的な1on1を実施。プロジェクトのステークホルダーのように、計画の見直しと軌道修正を一緒に行います。',
     badge: '1on1',
     badgeColor: 'bg-green-100 text-green-600',
+    comingSoon: true,
   },
 ]
 
@@ -64,14 +77,26 @@ export default function Features() {
             return (
               <div
                 key={feature.title}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-sky-100 hover:shadow-md hover:-translate-y-1 transition-all group"
+                className={`bg-white rounded-2xl p-6 shadow-sm border border-sky-100 transition-all group ${
+                  feature.comingSoon
+                    ? 'opacity-60 grayscale'
+                    : 'hover:shadow-md hover:-translate-y-1'
+                }`}
               >
                 <div className="flex items-start justify-between mb-5">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${feature.color}`}>
+                  <div
+                    className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                      feature.comingSoon ? 'bg-gray-100 text-gray-400' : feature.color
+                    }`}
+                  >
                     <Icon className="w-6 h-6" />
                   </div>
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${feature.badgeColor}`}>
-                    {feature.badge}
+                  <span
+                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                      feature.comingSoon ? 'bg-gray-200 text-gray-500' : feature.badgeColor
+                    }`}
+                  >
+                    {feature.comingSoon ? '準備中' : feature.badge}
                   </span>
                 </div>
                 <h3 className="text-gray-900 font-bold text-lg mb-3">{feature.title}</h3>
