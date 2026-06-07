@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Flower2, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
+import icon from '@/app/icon.svg'
 
 const navLinks = [
   { label: 'サービス', href: '/#features' },
@@ -76,7 +77,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 text-sky-500 font-bold text-xl">
-            <Flower2 className="w-6 h-6" />
+            <img src={icon.src} alt="ケンサン" className="w-6 h-6" />
             <span>ケンサン</span>
           </Link>
 

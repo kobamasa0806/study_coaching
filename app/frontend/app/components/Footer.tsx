@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Flower2 } from 'lucide-react'
+import icon from '@/app/icon.svg'
 
 const footerLinks: Record<string, { label: string; href: string }[]> = {
   開発者情報: [
@@ -18,7 +18,7 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2 text-white font-bold text-xl mb-4">
-              <Flower2 className="w-6 h-6 text-sky-400" />
+              <img src={icon.src} alt="ケンサン" className="w-6 h-6" />
               ケンサン
             </Link>
             <p className="text-sm leading-relaxed text-gray-500">
