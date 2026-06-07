@@ -110,7 +110,9 @@ async function buildPkceParams(clientId: string, redirectUri: string): Promise<U
     response_type: "code",
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: "openid email",
+    // profile スコープを含めることで id_token に name クレームを含める
+    // （氏名をヘッダー等のユーザー名表示に使用するため）
+    scope: "openid email profile",
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     state,

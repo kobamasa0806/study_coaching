@@ -123,10 +123,20 @@ def _get_or_create_user(claims: dict[str, Any]) -> Any:
         # パスワード認証は使用しないため、使用不能なパスワードを設定する
         user.set_unusable_password()
         user.save(update_fields=["password"])
-    elif user.is_staff != is_coach:
-        # Cognito グループの変更を Django 側に同期する
-        user.is_staff = is_coach
-        user.save(update_fields=["is_staff"])
+    else:
+        # Cognito 側の変更を Django 側に毎回同期する
+        update_fields: list[str] = []
+        if user.is_staff != is_coach:
+            user.is_staff = is_coach
+            update_fields.append("is_staff")
+        # 実際の name クレームが取得できた場合のみ username を同期する
+        # （cognito:username は UUID のため同期には使わない）
+        claimed_name = (claims.get("name") or "").strip()[:150]
+        if claimed_name and user.username != claimed_name:
+            user.username = claimed_name
+            update_fields.append("username")
+        if update_fields:
+            user.save(update_fields=update_fields)
 
     return user
 
