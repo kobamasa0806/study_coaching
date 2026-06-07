@@ -7,8 +7,8 @@ const steps = [
     title: '目標（ゴール）を設定する',
     description:
       '受験資格・試験日を登録し、プロジェクトのゴールを明確にします。マネージャーがヒアリングを行い、合格に必要な学習量と優先度を整理します。',
-    color: 'text-rose-500 bg-rose-50',
-    lineColor: 'border-rose-200',
+    color: 'text-sky-500 bg-sky-50',
+    lineColor: 'border-sky-200',
   },
   {
     step: '02',
@@ -16,8 +16,8 @@ const steps = [
     title: 'ガントチャートで計画を立てる',
     description:
       '科目・週ごとのスケジュールをガントチャートで作成。毎日の実績を記録して計画との差異を確認しながら、プロジェクトを着実に前進させます。',
-    color: 'text-pink-500 bg-pink-50',
-    lineColor: 'border-pink-200',
+    color: 'text-cyan-500 bg-cyan-50',
+    lineColor: 'border-cyan-200',
   },
   {
     step: '03',
@@ -36,7 +36,7 @@ export default function HowItWorks() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center mb-16">
-          <span className="inline-block text-rose-500 text-sm font-semibold uppercase tracking-wider mb-3">
+          <span className="inline-block text-sky-500 text-sm font-semibold uppercase tracking-wider mb-3">
             使い方
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
@@ -51,7 +51,7 @@ export default function HowItWorks() {
         {/* Steps */}
         <div className="relative">
           {/* Connector line (desktop) */}
-          <div className="hidden lg:block absolute top-16 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-rose-200 via-pink-200 to-green-200" />
+          <div className="hidden lg:block absolute top-16 left-1/6 right-1/6 h-0.5 bg-gradient-to-r from-sky-200 via-cyan-200 to-green-200" />
 
           <div className="grid lg:grid-cols-3 gap-10">
             {steps.map((step, index) => {
@@ -65,7 +65,7 @@ export default function HowItWorks() {
                     >
                       <Icon className="w-8 h-8" />
                     </div>
-                    <span className="absolute -top-2 -right-2 w-6 h-6 bg-rose-400 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-2 -right-2 w-6 h-6 bg-sky-400 text-white text-xs font-bold rounded-full flex items-center justify-center">
                       {index + 1}
                     </span>
                   </div>

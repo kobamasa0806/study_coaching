@@ -630,7 +630,7 @@ export default function GanttChart({
                                 {/* 削除ボタン */}
                                 <button
                                   onClick={e => { e.stopPropagation(); onRemoveItem(item.id) }}
-                                  className="p-1 rounded text-gray-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                                  className="p-1 rounded text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition-colors"
                                 >
                                   <Trash2 className="w-3 h-3" />
                                 </button>

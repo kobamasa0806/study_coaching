@@ -3,30 +3,30 @@ import { BarChart3, CalendarDays, MessageCircle, PenLine } from 'lucide-react'
 const features = [
   {
     icon: CalendarDays,
-    color: 'bg-rose-100 text-rose-600',
+    color: 'bg-sky-100 text-sky-600',
     title: 'ガントチャートで計画作成',
     description:
       '試験日から逆算して科目ごとの学習スケジュールをガントチャートで作成。まるでプロジェクトを立ち上げるように、合格への道筋を可視化します。',
     badge: '計画',
-    badgeColor: 'bg-rose-100 text-rose-600',
+    badgeColor: 'bg-sky-100 text-sky-600',
   },
   {
     icon: PenLine,
-    color: 'bg-pink-100 text-pink-600',
+    color: 'bg-cyan-100 text-cyan-600',
     title: '学習実績の記録',
     description:
       '毎日の学習時間・内容を記録し、計画と実績を比較。プロジェクトの進捗管理と同じ感覚で、遅れや前倒しをリアルタイムに把握できます。',
     badge: '記録',
-    badgeColor: 'bg-pink-100 text-pink-600',
+    badgeColor: 'bg-cyan-100 text-cyan-600',
   },
   {
     icon: BarChart3,
-    color: 'bg-rose-100 text-rose-500',
+    color: 'bg-sky-100 text-sky-500',
     title: '進捗・差異の分析',
     description:
       '計画対比の進捗率・弱点科目・学習パターンを自動分析。データをもとにリスクを早期発見し、合格に向けた意思決定を支援します。',
     badge: '分析',
-    badgeColor: 'bg-rose-100 text-rose-500',
+    badgeColor: 'bg-sky-100 text-sky-500',
   },
   {
     icon: MessageCircle,
@@ -41,11 +41,11 @@ const features = [
 
 export default function Features() {
   return (
-    <section id="features" className="bg-rose-50 py-24">
+    <section id="features" className="bg-sky-50 py-24">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center mb-16">
-          <span className="inline-block text-rose-500 text-sm font-semibold uppercase tracking-wider mb-3">
+          <span className="inline-block text-sky-500 text-sm font-semibold uppercase tracking-wider mb-3">
             サービス機能
           </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-4">
@@ -64,7 +64,7 @@ export default function Features() {
             return (
               <div
                 key={feature.title}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-rose-100 hover:shadow-md hover:-translate-y-1 transition-all group"
+                className="bg-white rounded-2xl p-6 shadow-sm border border-sky-100 hover:shadow-md hover:-translate-y-1 transition-all group"
               >
                 <div className="flex items-start justify-between mb-5">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${feature.color}`}>

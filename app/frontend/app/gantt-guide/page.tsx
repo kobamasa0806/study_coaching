@@ -270,11 +270,11 @@ const colorMap: Record<string, { bg: string; border: string; iconBg: string; ico
     badge: "bg-indigo-600",
   },
   rose: {
-    bg: "bg-rose-50",
-    border: "border-rose-200",
-    iconBg: "bg-rose-100",
-    iconText: "text-rose-600",
-    badge: "bg-rose-500",
+    bg: "bg-sky-50",
+    border: "border-sky-200",
+    iconBg: "bg-sky-100",
+    iconText: "text-sky-600",
+    badge: "bg-sky-500",
   },
   violet: {
     bg: "bg-violet-50",
@@ -416,7 +416,7 @@ export default function GanttGuidePage() {
         {/* ────────────────────────────────────────────────
             CTA: 無料登録 / ガントチャートを開く
         ──────────────────────────────────────────────── */}
-        <div className="mt-12 bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200 rounded-2xl px-6 py-8 text-center">
+        <div className="mt-12 bg-gradient-to-br from-sky-50 to-cyan-50 border border-sky-200 rounded-2xl px-6 py-8 text-center">
           <h3 className="text-lg font-bold text-gray-900 mb-2">さっそくガントチャートを使ってみましょう</h3>
           <p className="text-sm text-gray-600 mb-6">
             無料登録するだけで、ガントチャートによる学習管理とコーチとの1on1がすぐに始められます。
@@ -424,13 +424,13 @@ export default function GanttGuidePage() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/register"
-              className="inline-flex items-center justify-center gap-2 bg-rose-400 hover:bg-rose-500 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-md shadow-rose-200"
+              className="inline-flex items-center justify-center gap-2 bg-sky-400 hover:bg-sky-500 text-white font-bold px-6 py-3 rounded-xl text-sm transition-colors shadow-md shadow-sky-200"
             >
               無料で始める
             </Link>
             <Link
               href="/study-plan"
-              className="inline-flex items-center justify-center gap-2 bg-white border border-rose-200 hover:border-rose-300 text-gray-700 font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
+              className="inline-flex items-center justify-center gap-2 bg-white border border-sky-200 hover:border-sky-300 text-gray-700 font-semibold px-6 py-3 rounded-xl text-sm transition-colors"
             >
               <CalendarDays className="w-4 h-4 text-indigo-500" />
               ガントチャートを開く（ログイン後）

@@ -52,7 +52,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="text-lg font-semibold text-white mb-3">5. お問い合わせ</h2>
             <p>
               本ポリシーに関するご質問は、
-              <Link href="/contact" className="text-rose-400 hover:text-rose-300 underline mx-1">
+              <Link href="/contact" className="text-sky-400 hover:text-sky-300 underline mx-1">
                 お問い合わせフォーム
               </Link>
               よりご連絡ください。

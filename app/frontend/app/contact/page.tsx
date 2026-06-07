@@ -52,14 +52,14 @@ export default function ContactPage() {
 
         {status === 'success' ? (
           <div className="flex flex-col items-center gap-4 py-16 text-center">
-            <CheckCircle className="w-12 h-12 text-rose-400" />
+            <CheckCircle className="w-12 h-12 text-sky-400" />
             <p className="text-lg font-semibold text-white">お問い合わせを受け付けました</p>
             <p className="text-sm text-gray-500">
               内容を確認の上、ご連絡いたします。しばらくお待ちください。
             </p>
             <button
               onClick={() => { setStatus('idle'); setForm({ name: '', email: '', subject: '', message: '' }) }}
-              className="mt-4 text-sm text-rose-400 hover:text-rose-300 underline"
+              className="mt-4 text-sm text-sky-400 hover:text-sky-300 underline"
             >
               別のお問い合わせをする
             </button>
@@ -68,7 +68,7 @@ export default function ContactPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="name">
-                お名前 <span className="text-rose-400">*</span>
+                お名前 <span className="text-sky-400">*</span>
               </label>
               <input
                 id="name"
@@ -78,13 +78,13 @@ export default function ContactPage() {
                 value={form.name}
                 onChange={handleChange}
                 placeholder="山田 太郎"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-rose-500 transition-colors"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500 transition-colors"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="email">
-                メールアドレス <span className="text-rose-400">*</span>
+                メールアドレス <span className="text-sky-400">*</span>
               </label>
               <input
                 id="email"
@@ -94,13 +94,13 @@ export default function ContactPage() {
                 value={form.email}
                 onChange={handleChange}
                 placeholder="example@email.com"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-rose-500 transition-colors"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500 transition-colors"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="subject">
-                件名 <span className="text-rose-400">*</span>
+                件名 <span className="text-sky-400">*</span>
               </label>
               <input
                 id="subject"
@@ -110,13 +110,13 @@ export default function ContactPage() {
                 value={form.subject}
                 onChange={handleChange}
                 placeholder="お問い合わせの件名"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-rose-500 transition-colors"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500 transition-colors"
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1" htmlFor="message">
-                お問い合わせ内容 <span className="text-rose-400">*</span>
+                お問い合わせ内容 <span className="text-sky-400">*</span>
               </label>
               <textarea
                 id="message"
@@ -126,7 +126,7 @@ export default function ContactPage() {
                 value={form.message}
                 onChange={handleChange}
                 placeholder="ご質問・ご要望をご記入ください"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-rose-500 transition-colors resize-none"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-sky-500 transition-colors resize-none"
               />
             </div>
 
@@ -140,7 +140,7 @@ export default function ContactPage() {
             <button
               type="submit"
               disabled={status === 'loading'}
-              className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors"
+              className="flex items-center gap-2 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold px-6 py-3 rounded-lg text-sm transition-colors"
             >
               <Send className="w-4 h-4" />
               {status === 'loading' ? '送信中...' : '送信する'}

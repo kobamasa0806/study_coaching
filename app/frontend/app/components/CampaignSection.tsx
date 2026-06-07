@@ -2,11 +2,11 @@ import { ArrowRight, Gift, Sparkles } from 'lucide-react'
 
 export default function CampaignSection() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-rose-400 via-pink-400 to-rose-500 py-20">
+    <section className="relative overflow-hidden bg-gradient-to-br from-sky-400 via-cyan-400 to-sky-500 py-20">
       {/* 背景装飾 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-pink-300/20 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 rounded-full bg-cyan-300/20 blur-3xl" />
         {/* 花びら装飾 */}
         <svg className="absolute top-8 left-12 w-12 h-12 text-white/20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2C9.5 2 8 4.5 8 7c0 1.5.5 2.8 1.3 3.7C7.5 11.5 6 13.5 6 16c0 3.3 2.7 6 6 6s6-2.7 6-6c0-2.5-1.5-4.5-3.3-5.3.8-.9 1.3-2.2 1.3-3.7 0-2.5-1.5-5-4-5z"/>
@@ -56,7 +56,7 @@ export default function CampaignSection() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a
             href="/register"
-            className="inline-flex items-center justify-center gap-2 bg-white hover:bg-rose-50 text-rose-500 font-bold px-10 py-4 rounded-xl text-base transition-all shadow-lg hover:-translate-y-0.5"
+            className="inline-flex items-center justify-center gap-2 bg-white hover:bg-sky-50 text-sky-500 font-bold px-10 py-4 rounded-xl text-base transition-all shadow-lg hover:-translate-y-0.5"
           >
             今すぐ無料登録する
             <ArrowRight className="w-5 h-5" />

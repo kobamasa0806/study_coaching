@@ -34,7 +34,7 @@ export default function Navbar() {
           className={
             mobile
               ? 'text-center text-sm font-medium text-gray-600 py-2'
-              : 'text-sm font-medium text-gray-600 hover:text-rose-500 transition-colors'
+              : 'text-sm font-medium text-gray-600 hover:text-sky-500 transition-colors'
           }
         >
           ログアウト
@@ -50,7 +50,7 @@ export default function Navbar() {
           className={
             mobile
               ? 'text-center text-sm font-medium text-gray-600 py-2'
-              : 'text-sm font-medium text-gray-600 hover:text-rose-500 transition-colors'
+              : 'text-sm font-medium text-gray-600 hover:text-sky-500 transition-colors'
           }
         >
           ログイン
@@ -60,8 +60,8 @@ export default function Navbar() {
           onClick={() => setMenuOpen(false)}
           className={
             mobile
-              ? 'text-center bg-rose-400 text-white text-sm font-semibold px-4 py-2 rounded-lg'
-              : 'bg-rose-400 hover:bg-rose-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors'
+              ? 'text-center bg-sky-400 text-white text-sm font-semibold px-4 py-2 rounded-lg'
+              : 'bg-sky-400 hover:bg-sky-500 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors'
           }
         >
           新規登録
@@ -71,11 +71,11 @@ export default function Navbar() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-rose-100 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-sky-100 shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 text-rose-500 font-bold text-xl">
+          <Link href="/" className="flex items-center gap-2 text-sky-500 font-bold text-xl">
             <Flower2 className="w-6 h-6" />
             <span>ケンサン</span>
           </Link>
@@ -90,8 +90,8 @@ export default function Navbar() {
                   href={link.href}
                   className={`text-sm font-medium transition-colors ${
                     isActive
-                      ? 'text-rose-500 font-semibold'
-                      : 'text-gray-600 hover:text-rose-500'
+                      ? 'text-sky-500 font-semibold'
+                      : 'text-gray-600 hover:text-sky-500'
                   }`}
                 >
                   {link.label}
@@ -107,7 +107,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden text-gray-600 hover:text-rose-500"
+            className="md:hidden text-gray-600 hover:text-sky-500"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="メニュー"
           >
@@ -118,13 +118,13 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden bg-white border-t border-rose-100 px-4 py-4 space-y-3">
+        <div className="md:hidden bg-white border-t border-sky-100 px-4 py-4 space-y-3">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="block text-gray-700 hover:text-rose-500 font-medium py-2"
+              className="block text-gray-700 hover:text-sky-500 font-medium py-2"
             >
               {link.label}
             </Link>
