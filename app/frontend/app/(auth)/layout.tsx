@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-gray-50">
       <header className="py-4 px-6">
         <Link href="/" className="text-lg font-bold text-blue-600">
-          StudyCoach
+          ケンサン
         </Link>
       </header>
       <main>{children}</main>

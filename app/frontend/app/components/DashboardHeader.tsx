@@ -26,7 +26,7 @@ export default function DashboardHeader() {
           {/* ロゴ */}
           <Link href="/dashboard" className="flex items-center gap-2 text-indigo-600 font-bold text-lg">
             <BookOpen className="w-5 h-5" />
-            <span>StudyCoach</span>
+            <span>ケンサン</span>
           </Link>
 
           {/* ユーザー情報 & ログアウト */}
