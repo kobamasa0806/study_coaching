@@ -40,6 +40,7 @@ LOCAL_APPS = [
     "apps.plans",
     "apps.tasks",
     "apps.sessions",
+    "apps.study_logs",
     "apps.admin_panel",
     "apps.contact",
 ]

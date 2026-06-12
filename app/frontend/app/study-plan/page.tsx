@@ -13,6 +13,7 @@ import { ja } from 'date-fns/locale'
 import { Plus, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import GanttChart from './components/GanttChart'
+import StudyLogPanel from './components/StudyLogPanel'
 import { usePlanGantt } from '@/features/plans/usePlanGantt'
 
 /** ガントチャートの1行分のデータ */
@@ -47,7 +48,7 @@ function StudyPlanContent() {
   const [mounted, setMounted] = useState(false)
 
   // ガントチャート用データと操作関数を hook から取得
-  const { items, isLoading, addItem, removeItem, updateItemName, toggleDates } = usePlanGantt({
+  const { items, isLoading, planId, addItem, removeItem, updateItemName, toggleDates } = usePlanGantt({
     initialPlanId: planIdParam,
   })
 
@@ -156,6 +157,9 @@ function StudyPlanContent() {
           />
 
           <p className="text-xs text-gray-400 mt-3 text-right">変更は自動保存されます</p>
+
+          {/* 勉強時間の記録パネル */}
+          <StudyLogPanel planId={planId} items={items} />
         </div>
       </div>
     </>
