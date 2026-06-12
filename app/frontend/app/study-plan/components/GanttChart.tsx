@@ -180,13 +180,15 @@ export default function GanttChart({
   }
 
   // モバイルとデスクトップで切り替えるサイズ値
-  const nameColWidth = isMobile ? 140 : NAME_COL_WIDTH  // 項目名列幅
-  const cellHeight = isMobile ? 32 : 22                  // 日付セルの高さ
+  const nameColWidth = isMobile ? 96 : NAME_COL_WIDTH   // 項目列（項目名＋計画/実績ラベル）の合計幅
+  const labelColWidth = 16                               // スマホ時の「計/実」ラベル列の幅
+  const cellWidth = isMobile ? 20 : CELL_WIDTH           // 日付セルの幅
+  const cellHeight = isMobile ? 24 : 22                  // 日付セルの高さ
 
   // テーブルの最小幅（スクロール用）
   const tableMinWidth =
     nameColWidth +
-    monthInfos.reduce((sum, m) => sum + visibleCols(m) * CELL_WIDTH, 0)
+    monthInfos.reduce((sum, m) => sum + visibleCols(m) * cellWidth, 0)
 
   // ---- ドラッグ操作 ----
 
@@ -513,7 +515,7 @@ export default function GanttChart({
                   return (
                     <th
                       key={toDateStr(date)}
-                      style={{ width: CELL_WIDTH, minWidth: CELL_WIDTH }}
+                      style={{ width: cellWidth, minWidth: cellWidth }}
                       className={`border-b border-r border-gray-200 text-center text-xs font-medium py-1 ${
                         tdy
                           ? 'bg-indigo-600 text-white'     // 今日: 青背景
@@ -570,6 +572,108 @@ export default function GanttChart({
             ) : (
               items.map((item, idx) => {
                 const isLast = idx === items.length - 1
+
+                /*
+                  項目名エリア。
+                  スマホでは小さい文字＋折り返し表示にし、編集/削除ボタンは縦並びで小さく残す。
+                */
+                const nameArea = (
+                  <div
+                    className={`flex items-center gap-1 ${
+                      isMobile ? 'flex-1 min-w-0 h-full px-1 py-0.5' : 'px-3 py-1.5 min-h-[32px]'
+                    }`}
+                  >
+                    {editingId === item.id ? (
+                      /* 編集中: テキスト入力フォームを表示 */
+                      <div
+                        className="flex items-center gap-1 w-full"
+                        onMouseDown={e => e.stopPropagation()}
+                      >
+                        <input
+                          autoFocus
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          onKeyDown={e => e.key === 'Enter' && commitEdit()}
+                          onBlur={commitEdit}
+                          className={`flex-1 min-w-0 border border-indigo-300 rounded py-0.5 outline-none focus:ring-1 focus:ring-indigo-400 ${
+                            isMobile ? 'text-[11px] px-1' : 'text-sm px-1.5'
+                          }`}
+                        />
+                        <button
+                          onMouseDown={e => { e.stopPropagation(); commitEdit() }}
+                          className="text-emerald-500 hover:text-emerald-600 flex-shrink-0"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      /* 通常表示: 項目名とホバー時に編集・削除ボタンを表示 */
+                      <>
+                        <span
+                          className={`flex-1 min-w-0 font-medium text-gray-800 ${
+                            isMobile ? 'text-[11px] leading-tight break-words' : 'text-sm truncate'
+                          }`}
+                          title={item.name}
+                        >
+                          {item.name}
+                        </span>
+                        <div
+                          className={`flex-shrink-0 flex items-center [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/item:opacity-100 transition-opacity ${
+                            isMobile ? 'flex-col gap-0' : 'gap-0.5'
+                          }`}
+                          onMouseDown={e => e.stopPropagation()}
+                        >
+                          {/* 編集ボタン */}
+                          <button
+                            onClick={e => startEdit(item, e)}
+                            className={`rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors ${
+                              isMobile ? 'p-0.5' : 'p-1'
+                            }`}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          {/* 削除ボタン */}
+                          <button
+                            onClick={e => { e.stopPropagation(); onRemoveItem(item.id) }}
+                            className={`rounded text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition-colors ${
+                              isMobile ? 'p-0.5' : 'p-1'
+                            }`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )
+
+                /*
+                  「計画」「実績」ラベル。
+                  スマホでは「計／実」の1文字に省略し、縦並び（計＝上／実＝下）で各行に揃える。
+                  デスクトップでは従来どおり項目名の下に横並びで表示する。
+                */
+                const labelArea = (
+                  <div
+                    className={`flex border-gray-100 ${isMobile ? 'flex-col border-l' : 'flex-row border-t'}`}
+                    style={isMobile ? { width: labelColWidth, height: cellHeight * 2 } : { height: cellHeight * 2 }}
+                  >
+                    <div
+                      className={`flex-1 flex items-center justify-center bg-indigo-50 text-indigo-600 font-semibold tracking-wide border-gray-100 ${
+                        isMobile ? 'text-[10px] border-b' : 'text-xs border-r'
+                      }`}
+                    >
+                      {isMobile ? '計' : '計画'}
+                    </div>
+                    <div
+                      className={`flex-1 flex items-center justify-center bg-emerald-50 text-emerald-600 font-semibold tracking-wide ${
+                        isMobile ? 'text-[10px]' : 'text-xs'
+                      }`}
+                    >
+                      {isMobile ? '実' : '実績'}
+                    </div>
+                  </div>
+                )
+
                 return (
                   <Fragment key={item.id}>
 
@@ -584,70 +688,19 @@ export default function GanttChart({
                         rowSpan={2}
                         style={{ width: nameColWidth, minWidth: nameColWidth }}
                       >
-                        {/* 項目名エリア（クリックで編集モードに切り替わる） */}
-                        <div className="flex items-center gap-1 px-3 py-1.5 min-h-[32px]">
-                          {editingId === item.id ? (
-                            /* 編集中: テキスト入力フォームを表示 */
-                            <div
-                              className="flex items-center gap-1 w-full"
-                              onMouseDown={e => e.stopPropagation()}
-                            >
-                              <input
-                                autoFocus
-                                value={editValue}
-                                onChange={e => setEditValue(e.target.value)}
-                                onKeyDown={e => e.key === 'Enter' && commitEdit()}
-                                onBlur={commitEdit}
-                                className="flex-1 min-w-0 text-sm border border-indigo-300 rounded px-1.5 py-0.5 outline-none focus:ring-1 focus:ring-indigo-400"
-                              />
-                              <button
-                                onMouseDown={e => { e.stopPropagation(); commitEdit() }}
-                                className="text-emerald-500 hover:text-emerald-600 flex-shrink-0"
-                              >
-                                <Check className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            /* 通常表示: 項目名とホバー時に編集・削除ボタンを表示 */
-                            <>
-                              <span
-                                className="flex-1 min-w-0 text-sm font-medium text-gray-800 truncate"
-                                title={item.name}
-                              >
-                                {item.name}
-                              </span>
-                              <div
-                                className="flex-shrink-0 flex items-center gap-0.5 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover/item:opacity-100 transition-opacity"
-                                onMouseDown={e => e.stopPropagation()}
-                              >
-                                {/* 編集ボタン */}
-                                <button
-                                  onClick={e => startEdit(item, e)}
-                                  className="p-1 rounded text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                                >
-                                  <Pencil className="w-3 h-3" />
-                                </button>
-                                {/* 削除ボタン */}
-                                <button
-                                  onClick={e => { e.stopPropagation(); onRemoveItem(item.id) }}
-                                  className="p-1 rounded text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition-colors"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              </div>
-                            </>
-                          )}
-                        </div>
-
-                        {/* 「計画」「実績」のラベル（項目名セルの下半分） */}
-                        <div className="flex border-t border-gray-100" style={{ height: cellHeight * 2 }}>
-                          <div className="flex-1 flex items-center justify-center bg-indigo-50 text-indigo-600 text-xs font-semibold border-r border-gray-100 tracking-wide">
-                            計画
+                        {isMobile ? (
+                          /* スマホ: 項目名を左、計画/実績ラベルを右に横並びで配置する */
+                          <div className="flex items-stretch" style={{ height: cellHeight * 2 }}>
+                            {nameArea}
+                            {labelArea}
                           </div>
-                          <div className="flex-1 flex items-center justify-center bg-emerald-50 text-emerald-600 text-xs font-semibold tracking-wide">
-                            実績
-                          </div>
-                        </div>
+                        ) : (
+                          /* デスクトップ: 項目名を上、計画/実績ラベルを下に配置する */
+                          <>
+                            {nameArea}
+                            {labelArea}
+                          </>
+                        )}
                       </td>
 
                       {/* 計画日付セル（月ごとにレンダリング） */}
