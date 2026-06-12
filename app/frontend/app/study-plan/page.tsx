@@ -3,15 +3,14 @@
 /**
  * 学習計画ページ（ガントチャート表示）。
  * - 表示期間をナビゲーションボタンで前後に移動できる
- * - 「月を追加」ボタンで表示期間を延長できる
  * - 項目の追加・削除、日付セルのクリック/ドラッグで計画・実績を記録できる
  */
 
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { addDays, addMonths, differenceInDays, endOfMonth, startOfMonth, startOfWeek, format } from 'date-fns'
+import { addDays, startOfWeek, format } from 'date-fns'
 import { ja } from 'date-fns/locale'
-import { Plus, ChevronLeft, ChevronRight, CalendarDays, CalendarPlus } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import GanttChart from './components/GanttChart'
 import { usePlanGantt } from '@/features/plans/usePlanGantt'
@@ -43,7 +42,7 @@ function StudyPlanContent() {
   // 表示開始日（デフォルトは今週の月曜日）
   const [viewStart, setViewStart] = useState<Date>(new Date())
   // 表示する総日数
-  const [totalDays, setTotalDays] = useState(INITIAL_DAYS)
+  const totalDays = INITIAL_DAYS
   // SSR との日付ズレを防ぐためのマウント完了フラグ
   const [mounted, setMounted] = useState(false)
 
@@ -60,18 +59,6 @@ function StudyPlanContent() {
 
   // 表示する日付の配列
   const dates = getDisplayDates(viewStart, totalDays)
-
-  /**
-   * 「月を追加」ボタンの処理。
-   * 現在の表示終了月の次の月末まで表示期間を拡張する。
-   */
-  function addNextMonth() {
-    setTotalDays(prev => {
-      const currentEnd = addDays(viewStart, prev - 1)
-      const nextMonthEnd = endOfMonth(addMonths(startOfMonth(currentEnd), 1))
-      return differenceInDays(nextMonthEnd, viewStart) + 1
-    })
-  }
 
   // マウント前・データ読み込み中はローディング表示
   if (!mounted || isLoading) {
@@ -143,7 +130,7 @@ function StudyPlanContent() {
               {format(addDays(viewStart, totalDays - 1), 'M月d日', { locale: ja })}
             </span>
 
-            {/* 右端：凡例と月追加ボタン */}
+            {/* 右端：凡例 */}
             <div className="flex items-center gap-4 ml-auto">
               {/* 色の凡例 */}
               <div className="flex items-center gap-3">
@@ -156,16 +143,6 @@ function StudyPlanContent() {
                   <span className="text-xs text-gray-600 font-medium">実績</span>
                 </div>
               </div>
-
-              {/* 月を追加ボタン */}
-              <button
-                onClick={addNextMonth}
-                className="inline-flex items-center gap-1.5 bg-white hover:bg-indigo-50 border border-gray-200 hover:border-indigo-300 text-gray-700 hover:text-indigo-600 text-xs font-semibold px-3 py-2 rounded-xl transition-colors shadow-sm"
-                title="次の月を追加"
-              >
-                <CalendarPlus className="w-3.5 h-3.5" />
-                月を追加
-              </button>
             </div>
           </div>
 

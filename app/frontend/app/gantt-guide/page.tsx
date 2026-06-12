@@ -223,15 +223,6 @@ const guideSteps = [
         ),
       },
       {
-        label: "表示期間を延長する",
-        detail: (
-          <div className="space-y-2 text-sm text-gray-600">
-            <p><span className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded px-2 py-0.5 text-xs"><Plus className="w-3 h-3" />月を追加</span> ボタンをクリックすると、表示範囲が翌月末まで拡張されます。長期の学習計画を立てるときに使います。</p>
-            <p className="text-xs text-gray-500">デフォルトでは現在の週から8週間（56日）が表示されます。</p>
-          </div>
-        ),
-      },
-      {
         label: "月を折りたたむ/展開する",
         detail: (
           <div className="space-y-2 text-sm text-gray-600">
