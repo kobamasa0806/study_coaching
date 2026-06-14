@@ -1,0 +1,3 @@
+-r base.txt
+# WSGI サーバー: 本番・staging で gunicorn を使用する
+gunicorn==23.0.0

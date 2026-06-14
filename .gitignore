@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+
+# 環境変数（絶対にコミットしない）
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# 認証情報
+service_account.json
+credentials.json
+
+# Node
+node_modules/
+.next/
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# テスト
+.pytest_cache/
+.coverage
+htmlcov/
