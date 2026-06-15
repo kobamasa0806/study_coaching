@@ -38,3 +38,11 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+
+# 証明書・秘密鍵 (誤コミット防止)
+*.pem
+*.key
+*.crt
+id_rsa*
+id_ed25519*
+*.pfx
