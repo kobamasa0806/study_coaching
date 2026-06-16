@@ -12,6 +12,11 @@ const notoSansJP = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: 'ケンサン | 資格・試験合格のための学習コーチング',
   description: '学習計画の作成から進捗記録、専門コーチとの1on1まで。あなたの合格を全力でサポートする学習継続支援サービス。',
+  // 検索エンジンにインデックスさせない（検索避け）
+  robots: {
+    index: false,
+    follow: false,
+  },
 }
 
 export default function RootLayout({
