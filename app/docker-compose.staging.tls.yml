@@ -11,10 +11,12 @@
 
 services:
   nginx:
-    ports:
+    # !override で base のリストを置き換える (compose のデフォルトは append のため、
+    # ports や volumes が重複してエラーになるのを防ぐ)
+    ports: !override
       - "80:80"
       - "443:443"
-    volumes:
+    volumes: !override
       - ./nginx/staging-tls.conf:/etc/nginx/conf.d/default.conf:ro
       - static_files:/var/www/static:ro
       - media_files:/var/www/media:ro
