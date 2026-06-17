@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { Flower2 } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
