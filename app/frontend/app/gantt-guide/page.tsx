@@ -113,23 +113,6 @@ const guideSteps = [
           </div>
         ),
       },
-      {
-        label: "今日・土日のハイライト",
-        detail: (
-          <div className="space-y-2 text-sm text-gray-600">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 flex-1">
-                <div className="w-5 h-5 rounded bg-blue-400 flex-shrink-0" />
-                <span className="text-xs text-blue-700">今日の列は青色でハイライト表示されます</span>
-              </div>
-              <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 flex-1">
-                <div className="w-5 h-5 rounded bg-red-200 flex-shrink-0" />
-                <span className="text-xs text-red-700">土曜・日曜は薄い赤色で表示されます</span>
-              </div>
-            </div>
-          </div>
-        ),
-      },
     ],
   },
   {
@@ -142,7 +125,7 @@ const guideSteps = [
         label: "項目を追加する",
         detail: (
           <div className="space-y-2 text-sm text-gray-600">
-            <p>画面左上の <span className="inline-flex items-center gap-1 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded font-medium"><Plus className="w-3 h-3" />項目を追加</span> ボタンをクリックすると、新しい空の行が追加されます。</p>
+            <p>画面左上の <span className="inline-flex items-center gap-1 bg-indigo-600 text-white text-xs px-2 py-0.5 rounded font-medium"><Plus className="w-3 h-3" />項目を追加</span> ボタンをクリックすると入力モーダルが表示され、項目名を入力して「確定」を押すと新しい行が追加されます。</p>
             <p className="text-xs text-gray-500">初回アクセス時は「第1章 基礎知識」など5つのサンプル項目が自動作成されます。</p>
           </div>
         ),
@@ -165,7 +148,7 @@ const guideSteps = [
         label: "項目を削除する",
         detail: (
           <div className="space-y-2 text-sm text-gray-600">
-            <p>項目名の行にカーソルを合わせると、右側に <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded"><Trash2 className="w-3 h-3" />削除</span> ボタンが表示されます。クリックすると即座に削除されます（確認ダイアログなし）。</p>
+            <p>項目名の行にカーソルを合わせると、右側に <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 text-xs px-2 py-0.5 rounded"><Trash2 className="w-3 h-3" />削除</span> ボタンが表示されます。クリックすると確認ダイアログが表示され、確定すると削除されます。</p>
           </div>
         ),
       },
@@ -311,7 +294,7 @@ export default function GanttGuidePage() {
             <span>ガントチャート 使い方ガイド</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">ガントチャート 使い方ガイド</h1>
-          <p className="text-gray-500 text-sm">学習計画の立て方から日々の記録まで、ガントチャートの使い方をまとめました。</p>
+          <p className="text-gray-500 text-sm">学習プランの立て方から日々の記録まで、ガントチャートの使い方をまとめました。</p>
         </div>
 
         {/* ────────────────────────────────────────────────

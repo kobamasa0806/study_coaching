@@ -9,9 +9,19 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { differenceInCalendarDays, parseISO } from "date-fns";
 import { BookOpen, Plus, CalendarDays, ChevronRight, Loader2 } from "lucide-react";
 import { getPlans, createPlan, deletePlan } from "@/lib/api/plans";
 import type { Plan } from "@/lib/types/plans";
+import DashboardHeader from "../components/DashboardHeader";
+
+/** 目標日までの残り日数を表すラベルを返す */
+function formatDaysUntilTarget(targetDate: string): string {
+  const diff = differenceInCalendarDays(parseISO(targetDate), new Date());
+  if (diff > 0) return `目標まであと${diff}日！`;
+  if (diff === 0) return "目標日は今日です！";
+  return `目標日を${Math.abs(diff)}日過ぎています`;
+}
 
 /** ステータスの日本語ラベル */
 const STATUS_LABEL: Record<string, string> = {
@@ -77,12 +87,13 @@ export default function PlansPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <DashboardHeader />
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* ヘッダー */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">学習プラン一覧</h1>
-            <p className="text-sm text-gray-500 mt-1">作成した学習計画を管理します。</p>
+            <p className="text-sm text-gray-500 mt-1">作成した学習プランを管理します。</p>
           </div>
           <button
             onClick={() => setShowForm((v) => !v)}
@@ -195,6 +206,9 @@ export default function PlansPage() {
                     {plan.description && (
                       <p className="text-sm text-gray-500 truncate mt-0.5">{plan.description}</p>
                     )}
+                    <p className="text-xs font-semibold text-indigo-600 mt-1">
+                      {formatDaysUntilTarget(plan.target_date)}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button

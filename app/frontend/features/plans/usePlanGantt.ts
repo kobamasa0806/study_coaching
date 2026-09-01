@@ -26,7 +26,7 @@ type UsePlanGanttReturn = {
   items: GanttItem[];
   isLoading: boolean;
   planId: string | null;
-  addItem: () => Promise<void>;
+  addItem: (name: string) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   updateItemName: (id: string, name: string) => void;
   toggleDates: (
@@ -80,7 +80,7 @@ export function usePlanGantt({ initialPlanId }: UsePlanGanttOptions = {}): UsePl
             const targetDate = new Date(today);
             targetDate.setMonth(targetDate.getMonth() + 3);
             const newPlan = await createPlan({
-              title: "学習計画",
+              title: "学習プラン",
               description: "",
               target_date: targetDate.toISOString().slice(0, 10),
             });
@@ -170,12 +170,15 @@ export function usePlanGantt({ initialPlanId }: UsePlanGanttOptions = {}): UsePl
     [planId]
   );
 
-  const addItem = useCallback(async () => {
-    if (!planId) return;
-    const task = await createTask(planId, { title: "新しい項目" });
-    taskCacheRef.current.set(task.id, task);
-    setItems((prev) => [...prev, taskToGanttItem(task)]);
-  }, [planId]);
+  const addItem = useCallback(
+    async (name: string) => {
+      if (!planId) return;
+      const task = await createTask(planId, { title: name });
+      taskCacheRef.current.set(task.id, task);
+      setItems((prev) => [...prev, taskToGanttItem(task)]);
+    },
+    [planId]
+  );
 
   const removeItem = useCallback(
     async (id: string) => {

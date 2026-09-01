@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * 学習計画ページ（ガントチャート表示）。
+ * 学習プランページ（ガントチャート表示）。
  * - 表示期間をナビゲーションボタンで前後に移動できる
  * - 項目の追加・削除、日付セルのクリック/ドラッグで計画・実績を記録できる
  */
@@ -11,7 +11,7 @@ import { useSearchParams } from 'next/navigation'
 import { addDays, startOfWeek, format } from 'date-fns'
 import { ja } from 'date-fns/locale'
 import { Plus, ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react'
-import Navbar from '../components/Navbar'
+import DashboardHeader from '../components/DashboardHeader'
 import GanttChart from './components/GanttChart'
 import StudyLogPanel from './components/StudyLogPanel'
 import { usePlanGantt } from '@/features/plans/usePlanGantt'
@@ -52,6 +52,23 @@ function StudyPlanContent() {
     initialPlanId: planIdParam,
   })
 
+  // 項目追加モーダルの状態（連打による大量追加を防ぐため、確定操作を挟む）
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [newItemName, setNewItemName] = useState('')
+  const [isAddingItem, setIsAddingItem] = useState(false)
+
+  /** 項目追加モーダルを確定し、入力された名前で項目を作成する */
+  const handleConfirmAddItem = async () => {
+    setIsAddingItem(true)
+    try {
+      await addItem(newItemName.trim() || '項目名')
+      setIsAddModalOpen(false)
+      setNewItemName('')
+    } finally {
+      setIsAddingItem(false)
+    }
+  }
+
   useEffect(() => {
     // クライアントサイドで今週の月曜日を設定する
     setViewStart(startOfWeek(new Date(), { weekStartsOn: 1 }))
@@ -65,8 +82,8 @@ function StudyPlanContent() {
   if (!mounted || isLoading) {
     return (
       <>
-        <Navbar />
-        <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+        <DashboardHeader />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <p className="text-gray-400 text-sm">読み込み中...</p>
         </div>
       </>
@@ -75,20 +92,20 @@ function StudyPlanContent() {
 
   return (
     <>
-      <Navbar />
-      <div className="min-h-screen bg-gray-50 pt-16">
+      <DashboardHeader />
+      <div className="min-h-screen bg-gray-50">
         <div className="px-4 sm:px-6 py-8">
           {/* ページヘッダー */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-extrabold text-gray-900">学習計画</h1>
+              <h1 className="text-2xl font-extrabold text-gray-900">学習プラン</h1>
               <p className="text-gray-500 text-sm mt-1">
                 セルをクリック・ドラッグして計画（青）と実績（緑）を記録できます
               </p>
             </div>
             {/* 項目追加ボタン */}
             <button
-              onClick={addItem}
+              onClick={() => setIsAddModalOpen(true)}
               className="self-start sm:self-auto inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
@@ -162,6 +179,45 @@ function StudyPlanContent() {
           <StudyLogPanel planId={planId} items={items} />
         </div>
       </div>
+
+      {/* 項目追加モーダル */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+            <h2 className="font-semibold text-gray-900 mb-4">項目を追加</h2>
+            <label className="block text-sm font-medium text-gray-700 mb-1">項目名</label>
+            <input
+              autoFocus
+              type="text"
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !isAddingItem && handleConfirmAddItem()}
+              placeholder="例：第1章 基礎知識"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+            <div className="flex gap-3 justify-end mt-5">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddModalOpen(false)
+                  setNewItemName('')
+                }}
+                className="text-sm text-gray-600 hover:text-gray-900 px-4 py-2"
+              >
+                キャンセル
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmAddItem}
+                disabled={isAddingItem}
+                className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-50"
+              >
+                確定
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

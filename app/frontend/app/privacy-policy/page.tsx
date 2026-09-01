@@ -18,7 +18,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc list-inside mt-3 space-y-1 text-gray-500">
               <li>氏名・メールアドレス等の登録情報</li>
-              <li>学習計画・進捗データ等の利用情報</li>
+              <li>学習プラン・進捗データ等の利用情報</li>
               <li>アクセスログ・デバイス情報等の技術情報</li>
             </ul>
           </section>

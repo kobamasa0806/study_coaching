@@ -634,7 +634,10 @@ export default function GanttChart({
                           </button>
                           {/* 削除ボタン */}
                           <button
-                            onClick={e => { e.stopPropagation(); onRemoveItem(item.id) }}
+                            onClick={e => {
+                              e.stopPropagation()
+                              if (confirm('この項目を削除しますか？')) onRemoveItem(item.id)
+                            }}
                             className={`rounded text-gray-400 hover:text-sky-500 hover:bg-sky-50 transition-colors ${
                               isMobile ? 'p-0.5' : 'p-1'
                             }`}

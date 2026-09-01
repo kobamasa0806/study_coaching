@@ -40,6 +40,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
+  // ログイン済みで未ログイン向け LP にアクセス → ダッシュボードへリダイレクト
+  if (pathname === "/" && idToken) {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
   return NextResponse.next();
 }
 

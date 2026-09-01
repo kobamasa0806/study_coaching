@@ -1,9 +1,9 @@
 /**
- * 学習計画・タスク関連の型定義
+ * 学習プラン・タスク関連の型定義
  */
 
 /**
- * 学習計画のステータス
+ * 学習プランのステータス
  *   active    = 進行中
  *   completed = 完了
  *   archived  = アーカイブ（非表示）
@@ -18,7 +18,7 @@ export type PlanStatus = "active" | "completed" | "archived";
  */
 export type TaskStatus = "pending" | "in_progress" | "completed";
 
-/** 学習計画の型 */
+/** 学習プランの型 */
 export type Plan = {
   id: string;          // プランID（UUID）
   user_id: string;     // 所有ユーザーのID
@@ -33,7 +33,7 @@ export type Plan = {
 /** タスクの型（ガントチャートの各行に対応） */
 export type Task = {
   id: string;              // タスクID（UUID）
-  plan_id: string;         // 所属する学習計画のID
+  plan_id: string;         // 所属する学習プランのID
   title: string;           // タイトル
   description: string;     // 説明
   plan_dates: string[];    // 計画日付リスト（"YYYY-MM-DD" 形式の配列）
@@ -46,14 +46,14 @@ export type Task = {
   updated_at: string;      // 更新日時
 };
 
-/** 学習計画作成リクエストの型 */
+/** 学習プラン作成リクエストの型 */
 export type CreatePlanRequest = {
   title: string;        // タイトル
   description: string;  // 説明
   target_date: string;  // 目標日（YYYY-MM-DD 形式）
 };
 
-/** 学習計画更新リクエストの型 */
+/** 学習プラン更新リクエストの型 */
 export type UpdatePlanRequest = {
   title: string;        // タイトル
   description: string;  // 説明

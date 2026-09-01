@@ -1,7 +1,6 @@
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
 import Features from './components/Features'
-import HowItWorks from './components/HowItWorks'
 import TargetSection from './components/TargetSection'
 import CampaignSection from './components/CampaignSection'
 import Footer from './components/Footer'
@@ -12,7 +11,6 @@ export default function Home() {
       <Navbar />
       <Hero />
       <Features />
-      <HowItWorks />
       <TargetSection />
       <CampaignSection />
       <Footer />

@@ -6,7 +6,7 @@
  */
 
 import Link from "next/link";
-import { BookOpen, CalendarDays, MessageSquare, ArrowRight, HelpCircle } from "lucide-react";
+import { CalendarDays, MessageSquare, ArrowRight, HelpCircle } from "lucide-react";
 import DashboardHeader from "../components/DashboardHeader";
 
 export default function DashboardPage() {
@@ -28,22 +28,8 @@ export default function DashboardPage() {
               </div>
               <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-600 transition-colors" />
             </div>
-            <h2 className="font-semibold text-gray-900 mb-1">学習計画</h2>
-            <p className="text-sm text-gray-500">ガントチャートで進捗を管理する</p>
-          </Link>
-
-          <Link
-            href="/plans"
-            className="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-md transition-shadow group"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-emerald-600" />
-              </div>
-              <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors" />
-            </div>
             <h2 className="font-semibold text-gray-900 mb-1">学習プラン一覧</h2>
-            <p className="text-sm text-gray-500">作成したプランを確認・編集する</p>
+            <p className="text-sm text-gray-500">ガントチャートで進捗を管理する</p>
           </Link>
 
           {/* 1on1 セッションは準備中のためグレーアウト・非活性表示 */}

@@ -74,6 +74,26 @@ export default function StudyLogPanel({ planId, items }: StudyLogPanelProps) {
     return map
   }, [items])
 
+  // 項目（単元）ごとの勉強分数の合計。記録一覧はロード済みのため API 追加なしで集計できる。
+  const itemMinutes = useMemo(() => {
+    const totals = new Map<string, number>()
+    logs.forEach((log) => {
+      totals.set(log.task_id, (totals.get(log.task_id) ?? 0) + log.duration_minutes)
+    })
+    // ガントチャートの並び順を優先し、記録はあるが削除済みの項目は末尾に追加する
+    const rows = items
+      .filter((item) => totals.has(item.id))
+      .map((item) => ({ id: item.id, name: item.name, minutes: totals.get(item.id)! }))
+    totals.forEach((minutes, taskId) => {
+      if (!items.some((i) => i.id === taskId)) {
+        rows.push({ id: taskId, name: '（削除された項目）', minutes })
+      }
+    })
+    return rows
+  }, [logs, items])
+
+  const maxItemMinutes = Math.max(1, ...itemMinutes.map((r) => r.minutes))
+
   // 入力中の勉強分数（リアルタイム表示用）
   const liveDuration = calcDuration(startTime, endTime)
 
@@ -119,10 +139,13 @@ export default function StudyLogPanel({ planId, items }: StudyLogPanelProps) {
 
   return (
     <section className="mt-10">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-1">
         <Clock className="w-5 h-5 text-indigo-600" />
         <h2 className="text-lg font-extrabold text-gray-900">勉強時間の記録</h2>
       </div>
+      <p className="text-xs text-gray-400 mb-4">
+        ※ ここでの記録はガントチャートの実績には自動反映されません。実績はガントチャート上のセルを直接クリックして記録してください。
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 左：入力フォーム＋記録一覧 */}
@@ -298,6 +321,38 @@ export default function StudyLogPanel({ planId, items }: StudyLogPanelProps) {
             </div>
             <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
               バーが高い時間帯ほど、よく勉強しています。
+            </p>
+          </div>
+
+          {/* 項目（単元）別グラフ */}
+          <div className="mt-6 pt-5 border-t border-gray-100">
+            <p className="text-xs font-semibold text-gray-500 mb-2">
+              項目ごとの勉強量
+            </p>
+            {itemMinutes.length === 0 ? (
+              <p className="text-xs text-gray-400">まだ記録がありません。</p>
+            ) : (
+              <div className="space-y-2">
+                {itemMinutes.map((row) => (
+                  <div key={row.id} className="flex items-center gap-2">
+                    <span className="w-24 shrink-0 text-xs text-gray-600 truncate" title={row.name}>
+                      {row.name}
+                    </span>
+                    <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
+                      <div
+                        className="h-full bg-indigo-500 rounded"
+                        style={{ width: `${(row.minutes / maxItemMinutes) * 100}%` }}
+                      />
+                    </div>
+                    <span className="w-16 shrink-0 text-right text-xs font-semibold text-gray-700">
+                      {formatMinutes(row.minutes)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-[11px] text-gray-400 mt-3 leading-relaxed">
+              項目（単元）ごとの合計勉強時間です。積み上がっていく様子で達成感を確認できます。
             </p>
           </div>
         </div>

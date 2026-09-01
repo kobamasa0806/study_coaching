@@ -68,12 +68,6 @@ export default function Hero() {
                 無料で始める
                 <ArrowRight className="w-5 h-5" />
               </a>
-              <a
-                href="#features"
-                className="inline-flex items-center justify-center gap-2 bg-white/80 hover:bg-white text-gray-700 font-semibold px-8 py-4 rounded-xl text-base transition-all border border-sky-200 hover:border-sky-300"
-              >
-                サービス詳細を見る
-              </a>
             </div>
           </div>
 

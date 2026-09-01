@@ -7,7 +7,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut } from 'lucide-react'
+import { Home, LogOut } from 'lucide-react'
 import { useAuth } from '@/features/auth/useAuth'
 import icon from '@/app/icon.svg'
 
@@ -32,6 +32,14 @@ export default function DashboardHeader() {
 
           {/* ユーザー情報 & ログアウト */}
           <div className="flex items-center gap-4">
+            {/* ホームへの明示的な導線（ブラウザバックに頼らず戻れるようにする） */}
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              <span className="hidden sm:inline">ホーム</span>
+            </Link>
             {user && (
               <span className="text-sm text-gray-600 hidden sm:block">
                 {user.username}
