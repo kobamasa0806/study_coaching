@@ -7,7 +7,7 @@
  * - 合計勉強時間と、時間帯（0〜23時）ごとの勉強分布を可視化する
  */
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { format } from 'date-fns'
 import { Clock, Plus, Trash2 } from 'lucide-react'
 import type { GanttItem } from '../page'
@@ -18,6 +18,8 @@ type StudyLogPanelProps = {
   planId: string | null
   /** ガントチャートの項目（タスク）。記録の紐付け先として選択する */
   items: GanttItem[]
+  /** ガントチャートの実績セルを塗る/消す関数。記録の追加・削除に連動させる */
+  onToggleDates: (itemId: string, rowType: 'plan' | 'actual', dates: string[], fill: boolean) => void
 }
 
 /** 分数を「X時間Y分」表記に整形する */
@@ -53,8 +55,12 @@ function trimSeconds(time: string): string {
   return time.slice(0, 5)
 }
 
-export default function StudyLogPanel({ planId, items }: StudyLogPanelProps) {
-  const { logs, stats, isLoading, addLog, removeLog } = useStudyLogs(planId)
+export default function StudyLogPanel({ planId, items, onToggleDates }: StudyLogPanelProps) {
+  const toggleActualDate = useCallback(
+    (taskId: string, date: string, fill: boolean) => onToggleDates(taskId, 'actual', [date], fill),
+    [onToggleDates]
+  )
+  const { logs, stats, isLoading, addLog, removeLog } = useStudyLogs(planId, toggleActualDate)
 
   // 入力フォームの状態
   const [taskId, setTaskId] = useState<string>('')
@@ -144,7 +150,7 @@ export default function StudyLogPanel({ planId, items }: StudyLogPanelProps) {
         <h2 className="text-lg font-extrabold text-gray-900">勉強時間の記録</h2>
       </div>
       <p className="text-xs text-gray-400 mb-4">
-        ※ ここでの記録はガントチャートの実績には自動反映されません。実績はガントチャート上のセルを直接クリックして記録してください。
+        ※ ここで記録すると、その日付・項目のガントチャートの実績セルも自動で塗られます（記録を削除すると、他に同じ日付・項目の記録がなければ実績セルも消えます）。
       </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

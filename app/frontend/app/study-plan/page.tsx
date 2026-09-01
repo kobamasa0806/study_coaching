@@ -181,7 +181,7 @@ function StudyPlanContent() {
           <p className="text-xs text-gray-400 mt-3 text-right">変更は自動保存されます</p>
 
           {/* 勉強時間の記録パネル */}
-          <StudyLogPanel planId={planId} items={items} />
+          <StudyLogPanel planId={planId} items={items} onToggleDates={toggleDates} />
         </div>
       </div>
 
