@@ -48,7 +48,7 @@ function StudyPlanContent() {
   const [mounted, setMounted] = useState(false)
 
   // ガントチャート用データと操作関数を hook から取得
-  const { items, isLoading, planId, addItem, removeItem, updateItemName, toggleDates } = usePlanGantt({
+  const { items, isLoading, planId, targetDate, addItem, removeItem, updateItemName, toggleDates } = usePlanGantt({
     initialPlanId: planIdParam,
   })
 
@@ -160,6 +160,10 @@ function StudyPlanContent() {
                   <div className="w-3 h-3 rounded-sm bg-emerald-500" />
                   <span className="text-xs text-gray-600 font-medium">実績</span>
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-sm bg-orange-300" />
+                  <span className="text-xs text-gray-600 font-medium">目標日</span>
+                </div>
               </div>
             </div>
           </div>
@@ -168,6 +172,7 @@ function StudyPlanContent() {
           <GanttChart
             items={items}
             dates={dates}
+            targetDate={targetDate}
             onToggleDates={toggleDates}
             onUpdateName={updateItemName}
             onRemoveItem={removeItem}

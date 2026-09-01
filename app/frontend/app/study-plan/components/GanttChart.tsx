@@ -21,6 +21,8 @@ import type { GanttItem } from '../page'
 type Props = {
   items: GanttItem[]
   dates: Date[]
+  /** 学習プランの目標日（"yyyy-MM-dd" 形式）。設定されていれば計画・実績の両軸にオレンジで表示する */
+  targetDate?: string | null
   /** 日付セルのクリック/ドラッグ時に呼ばれる */
   onToggleDates: (itemId: string, rowType: 'plan' | 'actual', dates: string[], fill: boolean) => void
   /** 項目名の変更時に呼ばれる */
@@ -108,6 +110,7 @@ function buildYearGroups(monthInfos: MonthInfo[]): YearGroup[] {
 export default function GanttChart({
   items,
   dates,
+  targetDate,
   onToggleDates,
   onUpdateName,
   onRemoveItem,
@@ -721,6 +724,7 @@ export default function GanttChart({
                         return m.dates.map(date => {
                           const dateStr = toDateStr(date)
                           const filled = item.planDates.includes(dateStr) // 計画日かどうか
+                          const isTargetDate = !!targetDate && dateStr === targetDate // 目標日かどうか
                           const wknd = isWeekend(date)
                           const tdy = isToday(date)
                           return (
@@ -735,6 +739,8 @@ export default function GanttChart({
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
                                   ? 'bg-indigo-500'                      // 計画あり: 青
+                                  : isTargetDate
+                                  ? 'bg-orange-300 hover:bg-orange-400' // 目標日: オレンジ
                                   : tdy
                                   ? 'bg-indigo-50 hover:bg-indigo-200'  // 今日: 薄青
                                   : wknd
@@ -764,6 +770,7 @@ export default function GanttChart({
                         return m.dates.map(date => {
                           const dateStr = toDateStr(date)
                           const filled = item.actualDates.includes(dateStr) // 実績日かどうか
+                          const isTargetDate = !!targetDate && dateStr === targetDate // 目標日かどうか
                           const wknd = isWeekend(date)
                           const tdy = isToday(date)
                           return (
@@ -777,6 +784,8 @@ export default function GanttChart({
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
                                   ? 'bg-emerald-500'                       // 実績あり: 緑
+                                  : isTargetDate
+                                  ? 'bg-orange-300 hover:bg-orange-400'   // 目標日: オレンジ
                                   : tdy
                                   ? 'bg-emerald-50 hover:bg-emerald-200'  // 今日: 薄緑
                                   : wknd

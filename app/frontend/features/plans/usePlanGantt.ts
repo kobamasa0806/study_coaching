@@ -26,6 +26,8 @@ type UsePlanGanttReturn = {
   items: GanttItem[];
   isLoading: boolean;
   planId: string | null;
+  /** 学習プランの目標日（"yyyy-MM-dd" 形式） */
+  targetDate: string | null;
   addItem: (name: string) => Promise<void>;
   removeItem: (id: string) => Promise<void>;
   updateItemName: (id: string, name: string) => void;
@@ -49,6 +51,7 @@ export function usePlanGantt({ initialPlanId }: UsePlanGanttOptions = {}): UsePl
   const [items, setItems] = useState<GanttItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [planId, setPlanId] = useState<string | null>(null);
+  const [targetDate, setTargetDate] = useState<string | null>(null);
 
   /** タスク情報のキャッシュ（order や status 保持用） */
   const taskCacheRef = useRef<Map<string, Task>>(new Map());
@@ -91,6 +94,7 @@ export function usePlanGantt({ initialPlanId }: UsePlanGanttOptions = {}): UsePl
           plan = plans[0];
         }
         setPlanId(plan.id);
+        setTargetDate(plan.target_date);
 
         const tasks = await getTasks(plan.id);
         if (ignore) return;
@@ -225,5 +229,5 @@ export function usePlanGantt({ initialPlanId }: UsePlanGanttOptions = {}): UsePl
     [scheduleSave]
   );
 
-  return { items, isLoading, planId, addItem, removeItem, updateItemName, toggleDates };
+  return { items, isLoading, planId, targetDate, addItem, removeItem, updateItemName, toggleDates };
 }
