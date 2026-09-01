@@ -14,27 +14,25 @@ from ..domain.repositories import AbstractTaskRepository
 
 @dataclass
 class CreateTaskCommand:
-    """タスク作成コマンド。"""
+    """タスク作成コマンド。実績日付（actual_dates）は StudyLog から導出されるため含まない。"""
 
     plan_id: UUID
     title: str
     description: str
     plan_dates: list[str] = field(default_factory=list)
-    actual_dates: list[str] = field(default_factory=list)
     start_date: date | None = None
     end_date: date | None = None
 
 
 @dataclass
 class UpdateTaskCommand:
-    """タスク更新コマンド。"""
+    """タスク更新コマンド。実績日付（actual_dates）は StudyLog から導出されるため含まない。"""
 
     task_id: UUID
     plan_id: UUID
     title: str
     description: str
     plan_dates: list[str]
-    actual_dates: list[str]
     status: TaskStatus
     order: int
     start_date: date | None = None
@@ -66,7 +64,6 @@ class CreateTaskUseCase:
             title=command.title,
             description=command.description,
             plan_dates=command.plan_dates,
-            actual_dates=command.actual_dates,
             order=order,
             start_date=start_date,
             end_date=end_date,
@@ -133,7 +130,6 @@ class UpdateTaskUseCase:
             title=command.title,
             description=command.description,
             plan_dates=command.plan_dates,
-            actual_dates=command.actual_dates,
             status=command.status,
             order=command.order,
             start_date=start_date,

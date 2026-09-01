@@ -144,7 +144,6 @@ class TestUpdateTaskUseCase:
             title="更新後",
             description="",
             plan_dates=[],
-            actual_dates=[],
             status=TaskStatus.IN_PROGRESS,
             order=1,
         )
@@ -167,7 +166,6 @@ class TestUpdateTaskUseCase:
             title="更新",
             description="",
             plan_dates=[],
-            actual_dates=[],
             status=TaskStatus.PENDING,
             order=1,
         )

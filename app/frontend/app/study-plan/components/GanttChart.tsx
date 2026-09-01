@@ -4,7 +4,8 @@
  * ガントチャートコンポーネント。
  * - 年・月・曜日・日付の4行ヘッダーを持つ表形式のガントチャート
  * - 各項目（タスク）は「計画」行と「実績」行の2行で構成される
- * - セルをクリック・ドラッグして日付を塗りつぶす（もしくは消す）
+ * - 計画行はセルをクリック・ドラッグして日付を塗りつぶす（もしくは消す）
+ * - 実績行は手動での塗りつぶし不可。学習の記録（StudyLog）を追加・削除すると自動的に塗られる/消える
  * - 月ヘッダーをクリックすると列を折りたたみ/展開できる
  * - 項目名はクリックして編集できる
  */
@@ -225,6 +226,8 @@ export default function GanttChart({
   function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
     const info = getCellInfo(e.target as Element)
     if (!info) return
+    // 実績行は記録（StudyLog）からのみ自動的に塗られるため、手動での塗りつぶしを禁止する
+    if (info.rowType === 'actual') return
     e.preventDefault()
 
     const item = items.find(i => i.id === info.itemId)
@@ -335,6 +338,8 @@ export default function GanttChart({
       const target = document.elementFromPoint(touch.clientX, touch.clientY)
       const info = getCellInfo(target as Element)
       if (!info) return  // セル以外では通常のスクロールを許可する
+      // 実績行は記録（StudyLog）からのみ自動的に塗られるため、手動での塗りつぶしを禁止する
+      if (info.rowType === 'actual') return
       e.preventDefault() // セル上のタッチではスクロールを抑止してドラッグを優先する
 
       const item = itemsRef.current.find(i => i.id === info.itemId)
@@ -780,17 +785,18 @@ export default function GanttChart({
                               data-item-id={item.id}
                               data-row-type="actual"
                               data-date={dateStr}
-                              style={{ height: cellHeight, cursor: 'crosshair' }}
+                              style={{ height: cellHeight, cursor: 'default' }}
+                              title="実績は学習の記録から自動的に反映されます"
                               className={`border-r border-gray-100 transition-colors ${
                                 filled
-                                  ? 'bg-emerald-500'                       // 実績あり: 緑
+                                  ? 'bg-emerald-500'      // 実績あり: 緑（記録済み）
                                   : isTargetDate
-                                  ? 'bg-orange-300 hover:bg-orange-400'   // 目標日: オレンジ
+                                  ? 'bg-orange-300'       // 目標日: オレンジ
                                   : tdy
-                                  ? 'bg-emerald-50 hover:bg-emerald-200'  // 今日: 薄緑
+                                  ? 'bg-emerald-50'       // 今日: 薄緑
                                   : wknd
-                                  ? 'bg-gray-50 hover:bg-emerald-100'     // 土日: グレー
-                                  : 'hover:bg-emerald-100'                // 平日: ホバー時薄緑
+                                  ? 'bg-gray-50'          // 土日: グレー
+                                  : ''
                               }`}
                             />
                           )

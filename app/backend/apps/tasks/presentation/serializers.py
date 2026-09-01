@@ -24,23 +24,29 @@ class DateStringField(serializers.CharField):
 
 
 class CreateTaskSerializer(serializers.Serializer):
-    """タスク作成リクエストのシリアライザー。"""
+    """
+    タスク作成リクエストのシリアライザー。
+    actual_dates（実績日付）は StudyLog から自動導出される値のため、
+    クライアントから直接指定させない（受け取っても無視される）。
+    """
 
     title = serializers.CharField(max_length=255)
     description = serializers.CharField(default="", allow_blank=True)
     plan_dates = serializers.ListField(child=DateStringField(), default=list)
-    actual_dates = serializers.ListField(child=DateStringField(), default=list)
     start_date = serializers.DateField(required=False, allow_null=True)
     end_date = serializers.DateField(required=False, allow_null=True)
 
 
 class UpdateTaskSerializer(serializers.Serializer):
-    """タスク更新リクエストのシリアライザー。"""
+    """
+    タスク更新リクエストのシリアライザー。
+    actual_dates（実績日付）は StudyLog から自動導出される値のため、
+    クライアントから直接指定させない（受け取っても無視される）。
+    """
 
     title = serializers.CharField(max_length=255)
     description = serializers.CharField(default="", allow_blank=True)
     plan_dates = serializers.ListField(child=DateStringField(), default=list)
-    actual_dates = serializers.ListField(child=DateStringField(), default=list)
     status = serializers.ChoiceField(choices=[s.value for s in TaskStatus])
     order = serializers.IntegerField(min_value=1)
     start_date = serializers.DateField(required=False, allow_null=True)

@@ -31,12 +31,11 @@ class AbstractTaskRepository(ABC):
         title: str,
         description: str,
         plan_dates: list[str],
-        actual_dates: list[str],
         order: int,
         start_date: date | None = None,
         end_date: date | None = None,
     ) -> Task:
-        """新規タスクを作成する。"""
+        """新規タスクを作成する。実績日付（actual_dates）は StudyLog から導出されるため受け取らない。"""
         ...
 
     @abstractmethod
@@ -46,13 +45,12 @@ class AbstractTaskRepository(ABC):
         title: str,
         description: str,
         plan_dates: list[str],
-        actual_dates: list[str],
         status: TaskStatus,
         order: int,
         start_date: date | None = None,
         end_date: date | None = None,
     ) -> Task:
-        """タスクを更新する。"""
+        """タスクを更新する。実績日付（actual_dates）は StudyLog から導出されるため受け取らない。"""
         ...
 
     @abstractmethod
@@ -63,9 +61,4 @@ class AbstractTaskRepository(ABC):
     @abstractmethod
     def count_by_plan_id(self, plan_id: UUID) -> int:
         """計画IDに紐づくタスク数を返す。"""
-        ...
-
-    @abstractmethod
-    def add_actual_date(self, task_id: UUID, date_str: str) -> None:
-        """タスクの実績日付リストに日付を追加する（重複時はスキップ）。"""
         ...

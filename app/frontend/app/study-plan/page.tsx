@@ -100,7 +100,7 @@ function StudyPlanContent() {
             <div>
               <h1 className="text-2xl font-extrabold text-gray-900">学習プラン</h1>
               <p className="text-gray-500 text-sm mt-1">
-                セルをクリック・ドラッグして計画（青）と実績（緑）を記録できます
+                計画（青）はセルをクリック・ドラッグして記録できます。実績（緑）は学習の記録を追加すると自動的に反映されます
               </p>
             </div>
             {/* 項目追加ボタン */}

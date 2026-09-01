@@ -103,7 +103,6 @@ class TaskListCreateView(APIView):
                     title=serializer.validated_data["title"],
                     description=serializer.validated_data.get("description", ""),
                     plan_dates=serializer.validated_data.get("plan_dates", []),
-                    actual_dates=serializer.validated_data.get("actual_dates", []),
                     start_date=serializer.validated_data.get("start_date"),
                     end_date=serializer.validated_data.get("end_date"),
                 )
@@ -167,7 +166,6 @@ class TaskDetailView(APIView):
                     title=serializer.validated_data["title"],
                     description=serializer.validated_data.get("description", ""),
                     plan_dates=serializer.validated_data.get("plan_dates", []),
-                    actual_dates=serializer.validated_data.get("actual_dates", []),
                     start_date=serializer.validated_data.get("start_date"),
                     end_date=serializer.validated_data.get("end_date"),
                     status=TaskStatus(serializer.validated_data["status"]),
