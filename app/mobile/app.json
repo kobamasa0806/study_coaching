@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "kensan",
+    "slug": "kensan-mobile",
+    "scheme": "kensan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.studycoaching.kensan",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.studycoaching.kensan",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "expo-secure-store"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a7ef86b9-68b8-4ad8-96cc-7d41840dfeea"
+      }
+    },
+    "owner": "kobamasa"
+  }
+}

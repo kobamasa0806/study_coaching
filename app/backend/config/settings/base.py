@@ -41,6 +41,7 @@ LOCAL_APPS = [
     "apps.tasks",
     "apps.sessions",
     "apps.study_logs",
+    "apps.dashboard",
     "apps.admin_panel",
     "apps.contact",
 ]

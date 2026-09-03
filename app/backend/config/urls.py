@@ -28,6 +28,10 @@ urlpatterns = [
         "api/v1/plans/<uuid:plan_id>/study-logs/",
         include("apps.study_logs.presentation.urls"),
     ),
+    path(
+        "api/v1/plans/<uuid:plan_id>/dashboard/",
+        include("apps.dashboard.presentation.urls"),
+    ),
     path("api/v1/sessions/", include("apps.sessions.presentation.urls")),
     path("api/v1/admin/", include("apps.admin_panel.presentation.urls")),
     path("api/v1/contact/", include("apps.contact.presentation.urls")),
